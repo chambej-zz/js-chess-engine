@@ -25,6 +25,10 @@ GameBoard.posKey = 0;
 GameBoard.moveList = [MAXDEPTH * MAXPOSITIONMOVES];
 GameBoard.moveScores = [MAXDEPTH * MAXPOSITIONMOVES];
 GameBoard.moveListStart = [MAXDEPTH];
+GameBoard.pvTable = [];
+GameBoard.pvArray = [MAXDEPTH];
+GameBoard.searchHistory = [14 * BRD_SQ_NUM];
+GameBoard.searchKillers = [3 * MAXDEPTH];
 
 
 function checkBoard() {

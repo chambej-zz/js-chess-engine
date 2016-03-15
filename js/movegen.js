@@ -1,7 +1,28 @@
 /*jslint bitwise: true */
 /*jslint plusplus: true */
 /*jslint continue: true */
-/*global GameBoard, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, sqAttacked, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS */
+/*global GameBoard, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, sqAttacked, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS, generateMoves, NOMOVE, makeMove, takeMove  */
+
+function moveExists(move) {
+	"use strict";
+	generateMoves();
+    
+	var index, moveFound = NOMOVE;
+	for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
+	
+		moveFound = GameBoard.moveList[index];
+		if (makeMove(moveFound) === BOOL.FALSE) {
+			continue;
+		}
+		takeMove();
+		if (move === moveFound) {
+			return BOOL.TRUE;
+		}
+	}
+	return BOOL.FALSE;
+}
+
+
 function MOVE(from, to, captured, promoted, flag) {
     "use strict";
     return (from | (to << 7) | (captured << 14) | (promoted << 20) | flag);
