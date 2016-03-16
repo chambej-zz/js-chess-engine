@@ -1,7 +1,21 @@
 /*jslint bitwise: true */
 /*jslint plusplus: true */
 /*jslint continue: true */
-/*global GameBoard, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, sqAttacked, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS, generateMoves, NOMOVE, makeMove, takeMove  */
+/*global GameBoard, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, sqAttacked, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS, generateMoves, NOMOVE, makeMove, takeMove, CAPTURED, FROMSQ, MAXDEPTH, BRD_SQ_NUM, TOSQ  */
+
+var MvvLvaValue = [ 0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600 ], MvvLvaScores = new Array(14 * 14);
+
+function initMvvLva() {
+    "use strict";
+	var Attacker, Victim;
+	
+	for (Attacker = PIECES.wP; Attacker <= PIECES.bK; ++Attacker) {
+		for (Victim = PIECES.wP; Victim <= PIECES.bK; ++Victim) {
+			MvvLvaScores[Victim * 14 + Attacker] = MvvLvaValue[Victim] + 6 - (MvvLvaValue[Attacker] / 100);
+		}
+	}
+
+}
 
 function moveExists(move) {
 	"use strict";
@@ -31,19 +45,29 @@ function MOVE(from, to, captured, promoted, flag) {
 function addCaptureMove(move) {
     "use strict";
     GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = 0;
+    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = MvvLvaScores[CAPTURED(move) * 14 + GameBoard.pieces[FROMSQ(move)]] + 1000000;
 }
 
 function addQuietMove(move) {
     "use strict";
     GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = 0;
+    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 0;
+    
+    if (move === GameBoard.searchKillers[GameBoard.ply]) {
+        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 900000;
+    } else if (move === GameBoard.searchKillers[GameBoard.ply + MAXDEPTH]) {
+        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 800000;
+    } else {
+        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = GameBoard.searchHistory[GameBoard.pieces[FROMSQ(move)] * BRD_SQ_NUM + TOSQ(move)];
+    }
+    
+    GameBoard.moveListStart[GameBoard.ply + 1]++
 }
 
 function addEnPassentMove(move) {
     "use strict";
     GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = 0;
+    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = 105 + 1000000;
 }
 
 function addWhitePawnCaptureMove(from, to, cap) {
@@ -245,4 +269,113 @@ function generateMoves() {
         }
         pce = LoopSlidePiece[pceIndex++];
     }
+}
+
+function generateCaptures() {
+    "use strict";
+	GameBoard.moveListStart[GameBoard.ply + 1] = GameBoard.moveListStart[GameBoard.ply];
+	
+	var pceType, pceNum, sq, pceIndex, pce, t_sq, dir, index;
+    if (GameBoard.side === COLOURS.WHITE) {
+		pceType = PIECES.wP;
+		
+		for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
+			sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+			
+			if (SQOFFBOARD(sq + 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 9]] === COLOURS.BLACK) {
+				addWhitePawnCaptureMove(sq, sq + 9, GameBoard.pieces[sq + 9]);
+			}
+			
+			if (SQOFFBOARD(sq + 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 11]] === COLOURS.BLACK) {
+				addWhitePawnCaptureMove(sq, sq + 11, GameBoard.pieces[sq + 11]);
+			}
+			
+			if (GameBoard.enPas !== SQUARES.NO_SQ) {
+				if (sq + 9 === GameBoard.enPas) {
+					addEnPassentMove(MOVE(sq, sq + 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				}
+				
+				if (sq + 11 === GameBoard.enPas) {
+					addEnPassentMove(MOVE(sq, sq + 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				}
+			}
+			
+		}
+
+	} else {
+		pceType = PIECES.bP;
+		
+		for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
+			sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+			
+			if (SQOFFBOARD(sq - 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 9]] === COLOURS.WHITE) {
+				addBlackPawnCaptureMove(sq, sq - 9, GameBoard.pieces[sq - 9]);
+			}
+			
+			if (SQOFFBOARD(sq - 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 11]] === COLOURS.WHITE) {
+				addBlackPawnCaptureMove(sq, sq - 11, GameBoard.pieces[sq - 11]);
+			}
+			
+			if (GameBoard.enPas !== SQUARES.NO_SQ) {
+				if (sq - 9 === GameBoard.enPas) {
+					addEnPassentMove(MOVE(sq, sq - 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				}
+				
+				if (sq - 11 === GameBoard.enPas) {
+					addEnPassentMove(MOVE(sq, sq - 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				}
+			}
+		}
+	}
+	
+	pceIndex = LoopNonSlideIndex[GameBoard.side];
+	pce = LoopNonSlidePce[pceIndex++];
+	
+	while (pce !== 0) {
+		for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
+			sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+			
+			for (index = 0; index < DirNum[pce]; index++) {
+				dir = PceDir[pce][index];
+				t_sq = sq + dir;
+				
+				if (SQOFFBOARD(t_sq) === BOOL.TRUE) {
+					continue;
+				}
+				
+				if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
+					if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
+						addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+					}
+				}
+			}
+		}
+		pce = LoopNonSlidePce[pceIndex++];
+	}
+	
+	pceIndex = LoopSlidePieceIndex[GameBoard.side];
+	pce = LoopSlidePiece[pceIndex++];
+	
+	while (pce !== 0) {
+		for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
+			sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+			
+			for (index = 0; index < DirNum[pce]; index++) {
+				dir = PceDir[pce][index];
+				t_sq = sq + dir;
+				
+				while (SQOFFBOARD(t_sq) === BOOL.FALSE) {
+				
+					if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
+						if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
+							addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+						}
+						break;
+					}
+					t_sq += dir;
+				}
+			}
+		}
+		pce = LoopSlidePiece[pceIndex++];
+	}
 }

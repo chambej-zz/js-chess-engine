@@ -190,12 +190,11 @@ function updateListsMaterial() {
             GameBoard.pceNum[piece]++;
         }
     }
-    printPieceList();
 }
 
 function resetBoard() {
     "use strict";
-    var index = 0;
+    var index;
     
     for (index = 0; index < BRD_SQ_NUM; ++index) {
         GameBoard.pieces[index] = SQUARES.OFFBOARD;

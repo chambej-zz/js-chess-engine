@@ -1,6 +1,6 @@
 /*jslint plusplus: true */
 /*jslint browser: true */
-/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoard, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES */
+/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoard, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES, initMvvLva */
 function initFilesRanksBrd() {
     "use strict";
     var index = 0, file = FILES.FILE_A, rank = RANKS.RANK_1, sq = SQUARES.A1;
@@ -84,6 +84,7 @@ function init() {
     initHashKeys();
     initSq120ToSq64();
     initBoardVars();
+    initMvvLva();
     
 }
 
