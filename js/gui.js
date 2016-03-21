@@ -1,14 +1,46 @@
-/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN */
+/*jslint plusplus: true */
+/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN, newGame, setInitialBoardPieces, SQ120, GameBoard, FilesBrd, RanksBrd, PIECES, SideChar, PieceChar, PieceCol, PceChar  */
 $("#SetFen").click(function () {
     "use strict";
     var fenStr = $("#fenIn").val();
-    parseFen(fenStr);
-    //parseFen(START_FEN);
-    //printSqAttacked();
-    printBoard();
-    //perftTest(5);
-    searchPosition();
+    newGame(fenStr);
 });
+
+function newGame(fenStr) {
+    "use strict";
+	parseFen(fenStr);
+	printBoard();
+	setInitialBoardPieces();
+}
+
+function clearAllPieces() {
+    "use strict";
+	$(".Piece").remove();
+}
+
+function setInitialBoardPieces() {
+    "use strict";
+	var sq, sq120, file, rank, rankName, fileName, imageString, pieceFileName, pce;
+	
+	clearAllPieces();
+	
+	for (sq = 0; sq < 64; ++sq) {
+		sq120 = SQ120(sq);
+		pce = GameBoard.pieces[sq120];
+		file = FilesBrd[sq120];
+		rank = RanksBrd[sq120];
+		
+		if (pce >= PIECES.wP && pce <= PIECES.bK) {
+			rankName = "rank" + (rank + 1);
+			fileName = "file" + (file + 1);
+			pieceFileName = "images/" + SideChar[PieceCol[pce]] + PceChar[pce].toUpperCase() + ".png";
+			imageString = "<image src=\"" + pieceFileName + "\" class=\"Piece " + rankName + " " + fileName + "\"/>";
+			$("#Board").append(imageString);
+		}
+	}
+
+}
+
 
 // q3k2b/8/3n/8/8/8/8/R3K2R b KQkq - 0 1
 

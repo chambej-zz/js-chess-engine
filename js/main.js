@@ -1,6 +1,7 @@
 /*jslint plusplus: true */
 /*jslint browser: true */
-/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoard, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES, initMvvLva */
+/*jslint bitwise: true */
+/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoard, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES, initMvvLva, newGame */
 function initFilesRanksBrd() {
     "use strict";
     var index = 0, file = FILES.FILE_A, rank = RANKS.RANK_1, sq = SQUARES.A1;
@@ -77,6 +78,30 @@ function initBoardVars() {
     }
 }
 
+function initBoardSquares() {
+    "use strict";
+	var light = 0, rankName, fileName, divString, lastLight = 0, rankIter = 0, fileIter = 0, lightString;
+	
+	for (rankIter = RANKS.RANK_8; rankIter >= RANKS.RANK_1; rankIter--) {
+		light = lastLight ^ 1;
+		lastLight ^= 1;
+		rankName = "rank" + (rankIter + 1);
+		for (fileIter = FILES.FILE_A; fileIter <= FILES.FILE_H; fileIter++) {
+			fileName = "file" + (fileIter + 1);
+			
+			if (light === 0) {
+                lightString = "Light";
+            } else {
+                lightString = "Dark";
+            }
+			divString = "<div class=\"Square " + rankName + " " + fileName + " " + lightString + "\"/>";
+			light ^= 1;
+			$("#Board").append(divString);
+        }
+    }
+}
+
+
 function init() {
     "use strict";
     console.log("init() called");
@@ -85,14 +110,13 @@ function init() {
     initSq120ToSq64();
     initBoardVars();
     initMvvLva();
-    
+    initBoardSquares();
 }
 
 $(function () {
     "use strict";
 	init();
 	console.log("Main Init Called");
-    parseFen(START_FEN);
-    printBoard();
+    newGame(START_FEN);
 });
 
