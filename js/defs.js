@@ -181,6 +181,19 @@ function HASH_EP() {
     GameBoard.posKey ^= PieceKeys[GameBoard.enPas];
 }
 
+var GameController = {};
+GameController.EngineSide = COLOURS.BOTH;
+GameController.PlayerSide = COLOURS.BOTH;
+GameController.GameOver = BOOL.FALSE;
+
+var UserMove = {};
+UserMove.from = SQUARES.NO_SQ;
+UserMove.to = SQUARES.NO_SQ;
+
+
+
+
+
 
 
 
