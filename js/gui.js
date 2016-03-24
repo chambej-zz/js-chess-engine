@@ -1,10 +1,24 @@
 /*jslint plusplus: true */
 /*jslint bitwise: true */
-/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN, newGame, setInitialBoardPieces, SQ120, GameBoard, FilesBrd, RanksBrd, PIECES, SideChar, PieceChar, PieceCol, PceChar, console, FR2SQ, prSq, UserMove, SQUARES, makeUserMove, parseMove, NOMOVE, makeMove, BOOL, pieceIsOnSq, addGUIPiece, FROMSQ, TOSQ, MFLAGEP, COLOURS, CAPTURED, MFLAGCA, PROMOTED, moveGUIPiece  */
+/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN, newGame, setInitialBoardPieces, SQ120, GameBoard, FilesBrd, RanksBrd, PIECES, SideChar, PieceChar, PieceCol, PceChar, console, FR2SQ, prSq, UserMove, SQUARES, makeUserMove, parseMove, NOMOVE, makeMove, BOOL, pieceIsOnSq, addGUIPiece, FROMSQ, TOSQ, MFLAGEP, COLOURS, CAPTURED, MFLAGCA, PROMOTED, moveGUIPiece, generateMoves, takeMove, sqAttacked, PCEINDEX, Kings, GameController, checkAndSet, SearchController, startSearch, MAXDEPTH, preSearch  */
 $("#SetFen").click(function () {
     "use strict";
     var fenStr = $("#fenIn").val();
     newGame(fenStr);
+});
+
+$('#TakeButton').click(function () {
+    "use strict";
+    if (GameBoard.hisPly > 0) {
+        takeMove();
+        GameBoard.ply = 0;
+        setInitialBoardPieces();
+    }
+});
+
+$('#NewGameButton').click(function () {
+    "use strict";
+    newGame(START_FEN);
 });
 
 function newGame(fenStr) {
@@ -12,6 +26,7 @@ function newGame(fenStr) {
 	parseFen(fenStr);
 	printBoard();
 	setInitialBoardPieces();
+    checkAndSet();
 }
 
 function clearAllPieces() {
@@ -106,6 +121,8 @@ function makeUserMove() {
             makeMove(parsed);
             printBoard();
             moveGUIPiece(parsed);
+            checkAndSet();
+            preSearch();
         }
         
         deselectSq(UserMove.from);
@@ -194,6 +211,141 @@ function moveGUIPiece(move) {
         removeGUIPiece(to);
         addGUIPiece(to, PROMOTED(move));
     }
+}
+
+function drawMaterial() {
+    "use strict";
+    if (GameBoard.pceNum[PIECES.wP] !== 0
+            || GameBoard.pceNum[PIECES.bP] !== 0) {
+        return BOOL.FALSE;
+    }
+    if (GameBoard.pceNum[PIECES.wQ] !== 0
+            || GameBoard.pceNum[PIECES.bQ] !== 0
+            || GameBoard.pceNum[PIECES.wR] !== 0
+            || GameBoard.pceNum[PIECES.bR] !== 0) {
+        return BOOL.FALSE;
+    }
+    if (GameBoard.pceNum[PIECES.wB] > 1
+            || GameBoard.pceNum[PIECES.bB] > 1) {
+        return BOOL.FALSE;
+    }
+    if (GameBoard.pceNum[PIECES.wN] > 1
+            || GameBoard.pceNum[PIECES.bN] > 1) {
+        return BOOL.FALSE;
+    }
+    if (GameBoard.pceNum[PIECES.wN] !== 0
+            && GameBoard.pceNum[PIECES.wB] !== 0) {
+        return BOOL.FALSE;
+    }
+    if (GameBoard.pceNum[PIECES.bN] !== 0
+            && GameBoard.pceNum[PIECES.bB] !== 0) {
+        return BOOL.FALSE;
+    }
+    
+    return BOOL.TRUE;
+}
+
+function threeFoldRep() {
+    "use strict";
+    var i = 0, r = 0;
+    
+    for (i = 0; i < GameBoard.hisPly; ++i) {
+        if (GameBoard.history[i].posKey === GameBoard.posKey) {
+            r++;
+        }
+    }
+    return r;
+}
+
+function checkResult() {
+    "use strict";
+    if (GameBoard.fiftyMove >= 100) {
+        $("#GameStatus").text("GAME DRAWN {fifty move rule}");
+        return BOOL.TRUE;
+    }
+    if (threeFoldRep() >= 2) {
+        $("#GameStatus").text("GAME DRAWN {3-fold repetition}");
+        return BOOL.TRUE;
+    }
+    if (drawMaterial() === BOOL.TRUE) {
+        $("#GameStatus").text("GAME DRAWN {insufficient material to mate}");
+        return BOOL.TRUE;
+    }
+    
+    generateMoves();
+    var MoveNum = 0, found = 0, inCheck;
+    
+    for (MoveNum = GameBoard.moveListStart[GameBoard.ply]; MoveNum < GameBoard.moveListStart[GameBoard.ply + 1]; ++MoveNum) {
+        if (makeMove(GameBoard.moveList[MoveNum]) === BOOL.FALSE) {
+            continue;
+        } else {
+            found++;
+            takeMove();
+            break;
+        }
+    }
+    
+    if (found !== 0) {
+        return BOOL.FALSE;
+    }
+    
+    inCheck = sqAttacked(GameBoard.pList[PCEINDEX(Kings[GameBoard.side], 0)], GameBoard.side ^ 1);
+    
+    if (inCheck === BOOL.TRUE) {
+        if (GameBoard.side === COLOURS.WHITE) {
+            $("#GameStatus").text("GAME OVER {black mates}");
+            return BOOL.TRUE;
+        } else {
+            $("#GameStatus").text("GAME OVER {white mates}");
+            return BOOL.TRUE;
+        }
+    } else {
+        $("#GameStatus").text("GAME DRAWN {stalemate}");
+        return BOOL.TRUE;
+    }
+    
+    return BOOL.FALSE;
+}
+
+function checkAndSet() {
+    "use strict";
+    if (checkResult() === BOOL.TRUE) {
+        GameController.GameOver = BOOL.TRUE;
+    } else {
+        GameController.GameOver = BOOL.FALSE;
+        $("#GameStatus").text('');
+    }
+}
+
+function preSearch() {
+    "use strict";
+    if (GameController.GameOver === BOOL.FALSE) {
+        SearchController.thinking = BOOL.TRUE;
+        setTimeout(function () {
+            startSearch();
+        }, 200);
+    }
+}
+
+$("#SearchButton").click(function () {
+    "use strict";
+    GameController.PlayerSide = GameController.side ^ 1;
+    preSearch();
+});
+
+function startSearch() {
+    "use strict";
+    SearchController.depth = MAXDEPTH;
+    SearchController.start = $.now();
+    var thinkingTime = $("#ThinkTimeChoice").val();
+    
+    SearchController.time = parseInt(thinkingTime, [10]) * 1000;
+    searchPosition();
+    
+    makeMove(SearchController.best);
+    moveGUIPiece(SearchController.best);
+    checkAndSet();
+    
 }
 
 // q3k2b/8/3n/8/8/8/8/R3K2R b KQkq - 0 1

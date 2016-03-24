@@ -1,7 +1,7 @@
 /*jslint plusplus: true */
 /*jslint bitwise: true */
 /*jslint continue: true */
-/*global BOOL, NOMOVE, INFINITE, GameBoard, MAXDEPTH, generateMoves, makeMove, takeMove, $, evalPosition, storePvMove, sqAttacked, PCEINDEX, Kings, MATE, BRD_SQ_NUM, PVENTRIES, probePvTable, prMove, console, getPvLine, generateCaptures, MFLAGCAP, FROMSQ, TOSQ */
+/*global BOOL, NOMOVE, INFINITE, GameBoard, MAXDEPTH, generateMoves, makeMove, takeMove, $, evalPosition, storePvMove, sqAttacked, PCEINDEX, Kings, MATE, BRD_SQ_NUM, PVENTRIES, probePvTable, prMove, console, getPvLine, generateCaptures, MFLAGCAP, FROMSQ, TOSQ, updateDOMStats */
 var SearchController = {};
 
 SearchController.nodes;
@@ -50,7 +50,7 @@ function clearPvTable() {
 function checkUp() {
     "use strict";
     if (($.now() - SearchController.start) > SearchController.time) {
-        SearchController.stop === BOOL.TRUE;
+        SearchController.stop = BOOL.TRUE;
     }
 }
 
@@ -254,18 +254,19 @@ function clearForSearch() {
 
 function searchPosition() {
     "use strict";
-    var bestMove = NOMOVE, bestScore = -INFINITE, currentDepth = 0, line, PvNum, c;
+    var bestMove = NOMOVE, bestScore = -INFINITE, currentDepth = 0, line, PvNum, c, score;
     
     clearForSearch();
 
-    for (currentDepth = 1; currentDepth <= /*SearchController.depth*/ 6; ++currentDepth) {
+    for (currentDepth = 1; currentDepth <= SearchController.depth; ++currentDepth) {
 
-        bestScore = alphaBeta(-INFINITE, INFINITE, currentDepth);
+        score = alphaBeta(-INFINITE, INFINITE, currentDepth);
 
         if (SearchController.stop === BOOL.TRUE) {
             break;
         }
 
+        bestScore = score;
         bestMove = probePvTable();
         line = 'D:' + currentDepth + ' Best:' + prMove(bestMove) + ' Score:' + bestScore +
             ' nodes:' + SearchController.nodes;
@@ -284,5 +285,22 @@ function searchPosition() {
 
     SearchController.best = bestMove;
     SearchController.thinking = BOOL.FALSE;
+    updateDOMStats(bestScore, currentDepth);
 
+}
+
+function updateDOMStats(dom_score, dom_depth) {
+    "use strict";
+    var scoreText = "Score: " + (dom_score / 100).toFixed(2);
+    if (Math.abs(dom_score) > MATE - MAXDEPTH) {
+        scoreText = "Score: Mate In " + (MATE - (Math.abs(dom_score)) - 1) + " moves";
+    }
+    
+    $("#OrderingOut").text("Ordering:" + ((SearchController.fhf / SearchController.fh) * 100).toFixed(2) + "%");
+    $("#DepthOut").text("Depth: " + dom_depth);
+    $("#ScoreOut").text(scoreText);
+    $("#NodesOut").text("Nodes: " + SearchController.nodes);
+    $("#TimeOut").text("Time: " + (($.now() - SearchController.start) / 1000).toFixed(1) + "s");
+    $("#BestOut").text("BestMove: " + prMove(SearchController.best));
+    
 }
