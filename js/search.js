@@ -4,15 +4,15 @@
 /*global BOOL, NOMOVE, INFINITE, GameBoard, MAXDEPTH, generateMoves, makeMove, takeMove, $, evalPosition, storePvMove, sqAttacked, PCEINDEX, Kings, MATE, BRD_SQ_NUM, PVENTRIES, probePvTable, prMove, console, getPvLine, generateCaptures, MFLAGCAP, FROMSQ, TOSQ, updateDOMStats */
 var SearchController = {};
 
-SearchController.nodes;
-SearchController.fh;
-SearchController.fhf;
-SearchController.depth;
-SearchController.time;
-SearchController.start;
-SearchController.stop;
-SearchController.best;
-SearchController.thinking;
+SearchController.nodes = 0;
+SearchController.fh = 0;
+SearchController.fhf = 0;
+SearchController.depth = MAXDEPTH;
+SearchController.time = 0;
+SearchController.start = 0;
+SearchController.stop = 0;
+SearchController.best = 0;
+SearchController.thinking = BOOL.FALSE;
 
 function pickNextMove(MoveNum) {
     "use strict";

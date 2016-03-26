@@ -1,7 +1,7 @@
 /*jslint bitwise: true */
 /*jslint plusplus: true */
 /*jslint continue: true */
-/*global BRD_SQ_NUM, COLOURS, PIECES, SQUARES, PieceKeys, SideKey, CastleKeys, MAXDEPTH, MAXPOSITIONMOVES, SQ120, RANKS, FILES, console, FR2SQ, CASTLEBIT, RankChar, PceChar, FileChar, SideChar, PieceCol, PieceVal, prSq, BOOL, sqAttacked, KnDir, PieceKnight, RkDir, PieceRookQueen, BiDir, PieceBishopQueen, KiDir, PieceKing, genratePosKey */
+/*global BRD_SQ_NUM, COLOURS, PIECES, SQUARES, PieceKeys, SideKey, CastleKeys, MAXDEPTH, MAXPOSITIONMOVES, SQ120, RANKS, FILES, console, FR2SQ, CASTLEBIT, RankChar, PceChar, FileChar, SideChar, PieceCol, PieceVal, prSq, BOOL, sqAttacked, KnDir, PieceKnight, RkDir, PieceRookQueen, BiDir, PieceBishopQueen, KiDir, PieceKing, generatePosKey */
 function PCEINDEX(pce, pceNum) {
     "use strict";
     return (pce * 10 + pceNum);
@@ -73,7 +73,7 @@ function checkBoard() {
         return BOOL.FALSE;
     }
     
-    if (genratePosKey() !== GameBoard.posKey) {
+    if (generatePosKey() !== GameBoard.posKey) {
         console.log('Error GameBoard.posKey');
     }
     
@@ -136,7 +136,7 @@ function printPieceList() {
     }
 }
 
-function genratePosKey() {
+function generatePosKey() {
     "use strict";
     
     var sq = 0, finalKey = 0, piece = PIECES.EMPTY;
@@ -326,7 +326,7 @@ function parseFen(fen) {
         GameBoard.enPas = FR2SQ(file, rank);
     }
     
-    GameBoard.posKey = genratePosKey();
+    GameBoard.posKey = generatePosKey();
     updateListsMaterial();
     sqAttacked(21, 0);
 }
