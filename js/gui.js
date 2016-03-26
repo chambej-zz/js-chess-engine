@@ -1,73 +1,77 @@
 /*jslint plusplus: true */
 /*jslint bitwise: true */
-/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN, newGame, setInitialBoardPieces, SQ120, GameBoard, FilesBrd, RanksBrd, PIECES, SideChar, PieceChar, PieceCol, PceChar, console, FR2SQ, prSq, UserMove, SQUARES, makeUserMove, parseMove, NOMOVE, makeMove, BOOL, pieceIsOnSq, addGUIPiece, FROMSQ, TOSQ, MFLAGEP, COLOURS, CAPTURED, MFLAGCA, PROMOTED, moveGUIPiece, generateMoves, takeMove, sqAttacked, PCEINDEX, Kings, GameController, checkAndSet, SearchController, startSearch, MAXDEPTH, preSearch  */
+/*global $, parseFen, printBoard, printSqAttacked, perftTest, searchPosition, START_FEN, newGame, setInitialBoardPieces, SQ120, GameBoardController, FilesBrd, RanksBrd, PIECES, SideChar, PieceChar, PieceCol, PceChar, console, FR2SQ, prSq, UserMove, SQUARES, makeUserMove, parseMove, NOMOVE, makeMove, BOOL, pieceIsOnSq, addGUIPiece, FROMSQ, TOSQ, MFLAGEP, COLOURS, CAPTURED, MFLAGCA, PROMOTED, moveGUIPiece, generateMoves, takeMove, sqAttacked, PCEINDEX, Kings, GameController, checkAndSet, SearchController, startSearch, MAXDEPTH, preSearch  */
+var GuiController = {};
+
 $("#SetFen").click(function () {
     "use strict";
     var fenStr = $("#fenIn").val();
-    newGame(fenStr);
+    GuiController.newGame(fenStr);
 });
 
-$('#TakeButton').click(function () {
+$("#TakeButton").click(function () {
     "use strict";
-    if (GameBoard.hisPly > 0) {
-        takeMove();
-        GameBoard.ply = 0;
-        setInitialBoardPieces();
+    if (GameBoardController.hisPly > 0) {
+        MakeMoveController.takeMove();
+        GameBoardController.ply = 0;
+        GuiController.setInitialBoardPieces();
     }
 });
 
-$('#NewGameButton').click(function () {
+$("#NewGameButton").click(function () {
     "use strict";
-    newGame(START_FEN);
+    GuiController.newGame(START_FEN);
 });
 
-function newGame(fenStr) {
+GuiController.newGame = function (fenStr) {
     "use strict";
-	parseFen(fenStr);
-	printBoard();
-	setInitialBoardPieces();
-    checkAndSet();
-}
+	GameBoardController.parseFen(fenStr);
+	GameBoardController.printBoard();
+	GuiController.setInitialBoardPieces();
+    GuiController.checkAndSet();
+};
 
-function clearAllPieces() {
+GuiController.clearAllPieces = function () {
     "use strict";
 	$(".Piece").remove();
-}
+};
 
-function setInitialBoardPieces() {
+GuiController.setInitialBoardPieces = function () {
     "use strict";
-	var sq, sq120, file, rank, rankName, fileName, imageString, pieceFileName, pce;
+	var sq, sq120, pce;
 	
-	clearAllPieces();
+	GuiController.clearAllPieces();
 	
 	for (sq = 0; sq < 64; ++sq) {
 		sq120 = SQ120(sq);
-		pce = GameBoard.pieces[sq120];
+		pce = GameBoardController.pieces[sq120];
 
         if (pce >= PIECES.wP && pce <= PIECES.bK) {
-			addGUIPiece(sq120, pce);
+			GuiController.addGUIPiece(sq120, pce);
 		}
 	}
 
-}
+};
 
-function deselectSq(sq) {
+GuiController.deselectSq = function (sq) {
     "use strict";
-    $('.Square').each(function (index) {
-        if (pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
+    $(".Square").each(function () {
+        if (GuiController.pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
             $(this).removeClass('SqSelected');
         }
     });
-}
-function setSqSelected(sq) {
+};
+
+GuiController.setSqSelected = function (sq) {
     "use strict";
-    $('.Square').each(function (index) {
-        if (pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
+    $(".Square").each(function () {
+        if (GuiController.pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
             $(this).addClass('SqSelected');
         }
     });
-}
-function clickedSquare(pageX, pageY) {
+};
+
+GuiController.clickedSquare = function (pageX, pageY) {
     "use strict";
     console.log('clickedSquare() at ' + pageX + ',' + pageY);
     
@@ -84,73 +88,73 @@ function clickedSquare(pageX, pageY) {
     rank = 7 - Math.floor((pageY - workedY) / 60);
     sq = FR2SQ(file, rank);
     
-    console.log('Clicked sq: ' + prSq(sq));
-    setSqSelected(sq);
+    console.log('Clicked sq: ' + IoController.prSq(sq));
+    GuiController.setSqSelected(sq);
     
     return sq;
-}
+};
 
 $(document).on('click', '.Piece', function (e) {
     "use strict";
     console.log('Piece Click');
     if (UserMove.from === SQUARES.NO_SQ) {
-        UserMove.from = clickedSquare(e.pageX, e.pageY);
+        UserMove.from = GuiController.clickedSquare(e.pageX, e.pageY);
     } else {
-        UserMove.to = clickedSquare(e.pageX, e.pageY);
+        UserMove.to = GuiController.clickedSquare(e.pageX, e.pageY);
     }
-    makeUserMove();
+    GuiController.makeUserMove();
 });
 
 $(document).on('click', '.Square', function (e) {
     "use strict";
     console.log('Square Click');
     if (UserMove.from !== SQUARES.NO_SQ) {
-        UserMove.to = clickedSquare(e.pageX, e.pageY);
-        makeUserMove();
+        UserMove.to = GuiController.clickedSquare(e.pageX, e.pageY);
+        GuiController.makeUserMove();
     }
 });
 
-function makeUserMove() {
+GuiController.makeUserMove = function () {
     "use strict";
     if (UserMove.from !== SQUARES.NO_SQ && UserMove.to !== SQUARES.NO_SQ) {
-        console.log('User Move: ' + prSq(UserMove.from) + prSq(UserMove.to));
+        console.log('User Move: ' + IoController.prSq(UserMove.from) + IoController.prSq(UserMove.to));
         
-        var parsed = parseMove(UserMove.from, UserMove.to);
+        var parsed = IoController.parseMove(UserMove.from, UserMove.to);
         
         if (parsed !== NOMOVE) {
-            makeMove(parsed);
-            printBoard();
-            moveGUIPiece(parsed);
-            checkAndSet();
-            preSearch();
+            MakeMoveController.makeMove(parsed);
+            GameBoardController.printBoard();
+            GuiController.moveGUIPiece(parsed);
+            GuiController.checkAndSet();
+            GuiController.preSearch();
         }
         
-        deselectSq(UserMove.from);
-        deselectSq(UserMove.to);
+        GuiController.deselectSq(UserMove.from);
+        GuiController.deselectSq(UserMove.to);
         UserMove.from = SQUARES.NO_SQ;
         UserMove.to = SQUARES.NO_SQ;
     }
-}
+};
 
-function pieceIsOnSq(sq, top, left) {
+GuiController.pieceIsOnSq = function (sq, top, left) {
     "use strict";
     if ((RanksBrd[sq] === 7 - Math.round(top / 60)) && FilesBrd[sq] === Math.round(left / 60)) {
         return BOOL.TRUE;
     }
     return BOOL.FALSE;
     
-}
+};
 
-function removeGUIPiece(sq) {
+GuiController.removeGUIPiece = function (sq) {
     "use strict";
-    $('.Piece').each(function (index) {
-        if (pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
+    $(".Piece").each(function () {
+        if (GuiController.pieceIsOnSq(sq, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
             $(this).remove();
         }
     });
-}
+};
 
-function addGUIPiece(sq, pce) {
+GuiController.addGUIPiece = function (sq, pce) {
     "use strict";
     var file = FilesBrd[sq],
         rank = RanksBrd[sq],
@@ -159,9 +163,9 @@ function addGUIPiece(sq, pce) {
         pieceFileName = "images/" + SideChar[PieceCol[pce]] + PceChar[pce].toUpperCase() + ".png",
         imageString = "<image src=\"" + pieceFileName + "\" class=\"Piece " + rankName + " " + fileName + "\"/>";
 	$("#Board").append(imageString);
-}
+};
 
-function moveGUIPiece(move) {
+GuiController.moveGUIPiece = function (move) {
     "use strict";
     var from = FROMSQ(move),
         to = TOSQ(move),
@@ -172,17 +176,17 @@ function moveGUIPiece(move) {
         fileName = "file" + (file + 1);
     
     if (move & MFLAGEP) {
-        if (GameBoard.side === COLOURS.BLACK) {
+        if (GameBoardController.side === COLOURS.BLACK) {
             epRemove = to - 10;
         } else {
             epRemove = to + 10;
         }
-        removeGUIPiece(epRemove);
+        GuiController.removeGUIPiece(epRemove);
     } else if (CAPTURED(move)) {
-        removeGUIPiece(to);
+        GuiController.removeGUIPiece(to);
     }
-    $('.Piece').each(function (index) {
-        if (pieceIsOnSq(from, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
+    $(".Piece").each(function () {
+        if (GuiController.pieceIsOnSq(from, $(this).position().top, $(this).position().left) === BOOL.TRUE) {
             $(this).removeClass();
             $(this).addClass("Piece " + rankName + " " + fileName);
         }
@@ -191,96 +195,96 @@ function moveGUIPiece(move) {
     if (move & MFLAGCA) {
         switch (to) {
         case SQUARES.G1:
-            removeGUIPiece(SQUARES.H1);
-            addGUIPiece(SQUARES.F1, PIECES.wR);
+            GuiController.removeGUIPiece(SQUARES.H1);
+            GuiController.addGUIPiece(SQUARES.F1, PIECES.wR);
             break;
         case SQUARES.C1:
-            removeGUIPiece(SQUARES.A1);
-            addGUIPiece(SQUARES.D1, PIECES.wR);
+            GuiController.removeGUIPiece(SQUARES.A1);
+            GuiController.addGUIPiece(SQUARES.D1, PIECES.wR);
             break;
         case SQUARES.G8:
-            removeGUIPiece(SQUARES.H8);
-            addGUIPiece(SQUARES.F8, PIECES.bR);
+            GuiController.removeGUIPiece(SQUARES.H8);
+            GuiController.addGUIPiece(SQUARES.F8, PIECES.bR);
             break;
         case SQUARES.C8:
-            removeGUIPiece(SQUARES.A8);
-            addGUIPiece(SQUARES.D8, PIECES.bR);
+            GuiController.removeGUIPiece(SQUARES.A8);
+            GuiController.addGUIPiece(SQUARES.D8, PIECES.bR);
             break;
         }
     } else if (PROMOTED(move)) {
-        removeGUIPiece(to);
-        addGUIPiece(to, PROMOTED(move));
+        GuiController.removeGUIPiece(to);
+        GuiController.addGUIPiece(to, PROMOTED(move));
     }
-}
+};
 
-function drawMaterial() {
+GuiController.drawMaterial = function () {
     "use strict";
-    if (GameBoard.pceNum[PIECES.wP] !== 0
-            || GameBoard.pceNum[PIECES.bP] !== 0) {
+    if (GameBoardController.pceNum[PIECES.wP] !== 0
+            || GameBoardController.pceNum[PIECES.bP] !== 0) {
         return BOOL.FALSE;
     }
-    if (GameBoard.pceNum[PIECES.wQ] !== 0
-            || GameBoard.pceNum[PIECES.bQ] !== 0
-            || GameBoard.pceNum[PIECES.wR] !== 0
-            || GameBoard.pceNum[PIECES.bR] !== 0) {
+    if (GameBoardController.pceNum[PIECES.wQ] !== 0
+            || GameBoardController.pceNum[PIECES.bQ] !== 0
+            || GameBoardController.pceNum[PIECES.wR] !== 0
+            || GameBoardController.pceNum[PIECES.bR] !== 0) {
         return BOOL.FALSE;
     }
-    if (GameBoard.pceNum[PIECES.wB] > 1
-            || GameBoard.pceNum[PIECES.bB] > 1) {
+    if (GameBoardController.pceNum[PIECES.wB] > 1
+            || GameBoardController.pceNum[PIECES.bB] > 1) {
         return BOOL.FALSE;
     }
-    if (GameBoard.pceNum[PIECES.wN] > 1
-            || GameBoard.pceNum[PIECES.bN] > 1) {
+    if (GameBoardController.pceNum[PIECES.wN] > 1
+            || GameBoardController.pceNum[PIECES.bN] > 1) {
         return BOOL.FALSE;
     }
-    if (GameBoard.pceNum[PIECES.wN] !== 0
-            && GameBoard.pceNum[PIECES.wB] !== 0) {
+    if (GameBoardController.pceNum[PIECES.wN] !== 0
+            && GameBoardController.pceNum[PIECES.wB] !== 0) {
         return BOOL.FALSE;
     }
-    if (GameBoard.pceNum[PIECES.bN] !== 0
-            && GameBoard.pceNum[PIECES.bB] !== 0) {
+    if (GameBoardController.pceNum[PIECES.bN] !== 0
+            && GameBoardController.pceNum[PIECES.bB] !== 0) {
         return BOOL.FALSE;
     }
     
     return BOOL.TRUE;
-}
+};
 
-function threeFoldRep() {
+GuiController.threeFoldRep = function () {
     "use strict";
     var i = 0, r = 0;
     
-    for (i = 0; i < GameBoard.hisPly; ++i) {
-        if (GameBoard.history[i].posKey === GameBoard.posKey) {
+    for (i = 0; i < GameBoardController.hisPly; ++i) {
+        if (GameBoardController.history[i].posKey === GameBoardController.posKey) {
             r++;
         }
     }
     return r;
-}
+};
 
-function checkResult() {
+GuiController.checkResult = function () {
     "use strict";
-    if (GameBoard.fiftyMove >= 100) {
+    if (GameBoardController.fiftyMove >= 100) {
         $("#GameStatus").text("GAME DRAWN {fifty move rule}");
         return BOOL.TRUE;
     }
-    if (threeFoldRep() >= 2) {
+    if (GuiController.threeFoldRep() >= 2) {
         $("#GameStatus").text("GAME DRAWN {3-fold repetition}");
         return BOOL.TRUE;
     }
-    if (drawMaterial() === BOOL.TRUE) {
+    if (GuiController.drawMaterial() === BOOL.TRUE) {
         $("#GameStatus").text("GAME DRAWN {insufficient material to mate}");
         return BOOL.TRUE;
     }
     
-    generateMoves();
-    var MoveNum = 0, found = 0, inCheck;
+    MoveGenController.generateMoves();
+    var MoveNum, found = 0, inCheck;
     
-    for (MoveNum = GameBoard.moveListStart[GameBoard.ply]; MoveNum < GameBoard.moveListStart[GameBoard.ply + 1]; ++MoveNum) {
-        if (makeMove(GameBoard.moveList[MoveNum]) === BOOL.FALSE) {
-            continue;
+    for (MoveNum = GameBoardController.moveListStart[GameBoardController.ply]; MoveNum < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++MoveNum) {
+        if (MakeMoveController.makeMove(GameBoardController.moveList[MoveNum]) === BOOL.FALSE) {
+
         } else {
             found++;
-            takeMove();
+            MakeMoveController.takeMove();
             break;
         }
     }
@@ -289,10 +293,10 @@ function checkResult() {
         return BOOL.FALSE;
     }
     
-    inCheck = sqAttacked(GameBoard.pList[PCEINDEX(Kings[GameBoard.side], 0)], GameBoard.side ^ 1);
+    inCheck = GameBoardController.sqAttacked(GameBoardController.pList[PCEINDEX(Kings[GameBoardController.side], 0)], GameBoardController.side ^ 1);
     
     if (inCheck === BOOL.TRUE) {
-        if (GameBoard.side === COLOURS.WHITE) {
+        if (GameBoardController.side === COLOURS.WHITE) {
             $("#GameStatus").text("GAME OVER {black mates}");
             return BOOL.TRUE;
         } else {
@@ -303,50 +307,49 @@ function checkResult() {
         $("#GameStatus").text("GAME DRAWN {stalemate}");
         return BOOL.TRUE;
     }
-    
-    return BOOL.FALSE;
-}
 
-function checkAndSet() {
+};
+
+GuiController.checkAndSet = function () {
     "use strict";
-    if (checkResult() === BOOL.TRUE) {
+    if (GuiController.checkResult() === BOOL.TRUE) {
         GameController.GameOver = BOOL.TRUE;
     } else {
         GameController.GameOver = BOOL.FALSE;
         $("#GameStatus").text('');
     }
-}
+};
 
-function preSearch() {
+GuiController.preSearch = function () {
     "use strict";
     if (GameController.GameOver === BOOL.FALSE) {
         SearchController.thinking = BOOL.TRUE;
         setTimeout(function () {
-            startSearch();
+            GuiController.startSearch();
         }, 200);
     }
-}
+};
 
 $("#SearchButton").click(function () {
     "use strict";
     GameController.PlayerSide = GameController.side ^ 1;
-    preSearch();
+    GuiController.preSearch();
 });
 
-function startSearch() {
+GuiController.startSearch = function () {
     "use strict";
     SearchController.depth = MAXDEPTH;
     SearchController.start = $.now();
     var thinkingTime = $("#ThinkTimeChoice").val();
     
     SearchController.time = parseInt(thinkingTime, [10]) * 1000;
-    searchPosition();
+    SearchController.searchPosition();
     
-    makeMove(SearchController.best);
-    moveGUIPiece(SearchController.best);
-    checkAndSet();
+    MakeMoveController.makeMove(SearchController.best);
+    GuiController.moveGUIPiece(SearchController.best);
+    GuiController.checkAndSet();
     
-}
+};
 
 // q3k2b/8/3n/8/8/8/8/R3K2R b KQkq - 0 1
 

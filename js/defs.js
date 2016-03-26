@@ -1,5 +1,5 @@
 /*jslint bitwise: true */
-/*global GameBoard */
+/*global GameBoardController */
 var PIECES =  { EMPTY : 0, wP : 1, wN : 2, wB : 3, wR : 4, wQ : 5, wK : 6, bP : 7, bN : 8, bB : 9, bR : 10, bQ : 11, bK : 12  };
               
 var BRD_SQ_NUM = 120;
@@ -71,6 +71,9 @@ var CastleKeys = [16];
 var Sq120ToSq64 = [BRD_SQ_NUM];
 var Sq64ToSq120 = [64];
 
+/**
+ * @return {number}
+ */
 function RAND_32() {
     "use strict";
 	return (Math.floor((Math.random() * 255) + 1) << 23) | (Math.floor((Math.random() * 255) + 1) << 16)
@@ -163,22 +166,22 @@ function SQOFFBOARD(sq) {
 
 function HASH_PCE(pce, sq) {
     "use strict";
-    GameBoard.posKey ^= PieceKeys[(pce * 120) + sq];
+    GameBoardController.posKey ^= PieceKeys[(pce * 120) + sq];
 }
 
 function HASH_CA() {
     "use strict";
-    GameBoard.posKey ^= CastleKeys[GameBoard.castlePerm];
+    GameBoardController.posKey ^= CastleKeys[GameBoardController.castlePerm];
 }
 
 function HASH_SIDE() {
     "use strict";
-    GameBoard.posKey ^= SideKey;
+    GameBoardController.posKey ^= SideKey;
 }
 
 function HASH_EP() {
     "use strict";
-    GameBoard.posKey ^= PieceKeys[GameBoard.enPas];
+    GameBoardController.posKey ^= PieceKeys[GameBoardController.enPas];
 }
 
 var GameController = {};
@@ -189,6 +192,11 @@ GameController.GameOver = BOOL.FALSE;
 var UserMove = {};
 UserMove.from = SQUARES.NO_SQ;
 UserMove.to = SQUARES.NO_SQ;
+
+function PCEINDEX(pce, pceNum) {
+    "use strict";
+    return (pce * 10 + pceNum);
+}
 
 
 

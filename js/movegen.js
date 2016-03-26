@@ -1,11 +1,12 @@
 /*jslint bitwise: true */
 /*jslint plusplus: true */
 /*jslint continue: true */
-/*global GameBoard, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, sqAttacked, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS, generateMoves, NOMOVE, makeMove, takeMove, CAPTURED, FROMSQ, MAXDEPTH, BRD_SQ_NUM, TOSQ  */
+/*global GameBoardController, COLOURS, PIECES, PCEINDEX, RanksBrd, RANKS, SQUARES, BOOL, PieceCol, CASTLEBIT, SQOFFBOARD, LoopNonSlideIndex, LoopNonSlidePce, DirNum, PceDir, LoopSlidePieceIndex, LoopSlidePiece, MFLAGCA, MFLAGEP, MFLAGPS, generateMoves, NOMOVE, makeMove, takeMove, CAPTURED, FROMSQ, MAXDEPTH, BRD_SQ_NUM, TOSQ  */
+var MoveGenController = {};
 
 var MvvLvaValue = [ 0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600 ], MvvLvaScores = new Array(14 * 14);
 
-function initMvvLva() {
+MoveGenController.initMvvLva = function () {
     "use strict";
 	var Attacker, Victim;
 	
@@ -15,213 +16,216 @@ function initMvvLva() {
 		}
 	}
 
-}
+};
 
-function moveExists(move) {
+MoveGenController.moveExists = function (move) {
 	"use strict";
-	generateMoves();
+	MoveGenController.generateMoves();
     
 	var index, moveFound = NOMOVE;
-	for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
+	for (index = GameBoardController.moveListStart[GameBoardController.ply]; index < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++index) {
 	
-		moveFound = GameBoard.moveList[index];
-		if (makeMove(moveFound) === BOOL.FALSE) {
+		moveFound = GameBoardController.moveList[index];
+		if (MakeMoveController.makeMove(moveFound) === BOOL.FALSE) {
 			continue;
 		}
-		takeMove();
+		MakeMoveController.takeMove();
 		if (move === moveFound) {
 			return BOOL.TRUE;
 		}
 	}
 	return BOOL.FALSE;
-}
+};
 
 
-function MOVE(from, to, captured, promoted, flag) {
+/**
+ * @return {number}
+ */
+MoveGenController.MOVE = function (from, to, captured, promoted, flag) {
     "use strict";
     return (from | (to << 7) | (captured << 14) | (promoted << 20) | flag);
-}
+};
 
-function addCaptureMove(move) {
+MoveGenController.addCaptureMove = function (move) {
     "use strict";
-    GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = MvvLvaScores[CAPTURED(move) * 14 + GameBoard.pieces[FROMSQ(move)]] + 1000000;
-}
+    GameBoardController.moveList[GameBoardController.moveListStart[GameBoardController.ply + 1]] = move;
+    GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]++] = MvvLvaScores[CAPTURED(move) * 14 + GameBoardController.pieces[FROMSQ(move)]] + 1000000;
+};
 
-function addQuietMove(move) {
+MoveGenController.addQuietMove = function (move) {
     "use strict";
-    GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 0;
+    GameBoardController.moveList[GameBoardController.moveListStart[GameBoardController.ply + 1]] = move;
+    GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]] = 0;
     
-    if (move === GameBoard.searchKillers[GameBoard.ply]) {
-        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 900000;
-    } else if (move === GameBoard.searchKillers[GameBoard.ply + MAXDEPTH]) {
-        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = 800000;
+    if (move === GameBoardController.searchKillers[GameBoardController.ply]) {
+        GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]] = 900000;
+    } else if (move === GameBoardController.searchKillers[GameBoardController.ply + MAXDEPTH]) {
+        GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]] = 800000;
     } else {
-        GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]] = GameBoard.searchHistory[GameBoard.pieces[FROMSQ(move)] * BRD_SQ_NUM + TOSQ(move)];
+        GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]] = GameBoardController.searchHistory[GameBoardController.pieces[FROMSQ(move)] * BRD_SQ_NUM + TOSQ(move)];
     }
     
-    GameBoard.moveListStart[GameBoard.ply + 1]++
-}
+    GameBoardController.moveListStart[GameBoardController.ply + 1]++
+};
 
-function addEnPassentMove(move) {
+MoveGenController.addEnPassentMove = function (move) {
     "use strict";
-    GameBoard.moveList[GameBoard.moveListStart[GameBoard.ply + 1]] = move;
-    GameBoard.moveScores[GameBoard.moveListStart[GameBoard.ply + 1]++] = 105 + 1000000;
-}
+    GameBoardController.moveList[GameBoardController.moveListStart[GameBoardController.ply + 1]] = move;
+    GameBoardController.moveScores[GameBoardController.moveListStart[GameBoardController.ply + 1]++] = 105 + 1000000;
+};
 
-function addWhitePawnCaptureMove(from, to, cap) {
+MoveGenController.addWhitePawnCaptureMove = function (from, to, cap) {
     "use strict";
     if (RanksBrd[from] === RANKS.RANK_7) {
-        addCaptureMove(MOVE(from, to, cap, PIECES.wQ, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.wR, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.wB, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.wN, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.wQ, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.wR, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.wB, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.wN, 0));
     } else {
-        addCaptureMove(MOVE(from, to, cap, PIECES.EMPTY, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.EMPTY, 0));
     }
-}
+};
 
-function addBlackPawnCaptureMove(from, to, cap) {
+MoveGenController.addBlackPawnCaptureMove = function (from, to, cap) {
     "use strict";
     if (RanksBrd[from] === RANKS.RANK_2) {
-        addCaptureMove(MOVE(from, to, cap, PIECES.bQ, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.bR, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.bB, 0));
-        addCaptureMove(MOVE(from, to, cap, PIECES.bN, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.bQ, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.bR, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.bB, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.bN, 0));
     } else {
-        addCaptureMove(MOVE(from, to, cap, PIECES.EMPTY, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, cap, PIECES.EMPTY, 0));
     }
-}
+};
 
-function addWhitePawnQuietMove(from, to) {
+MoveGenController.addWhitePawnQuietMove = function (from, to) {
     "use strict";
     if (RanksBrd[from] === RANKS.RANK_7) {
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.wQ, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.wR, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.wB, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.wN, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.wQ, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.wR, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.wB, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.wN, 0));
     } else {
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.EMPTY, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.EMPTY, 0));
     }
-}
+};
 
-function addBlackPawnQuietMove(from, to) {
+MoveGenController.addBlackPawnQuietMove = function (from, to) {
     "use strict";
     if (RanksBrd[from] === RANKS.RANK_2) {
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.bQ, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.bR, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.bB, 0));
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.bN, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.bQ, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.bR, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.bB, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.bN, 0));
     } else {
-        addCaptureMove(MOVE(from, to, PIECES.EMPTY, PIECES.EMPTY, 0));
+        MoveGenController.addCaptureMove(MoveGenController.MOVE(from, to, PIECES.EMPTY, PIECES.EMPTY, 0));
     }
-}
+};
 
-function generateMoves() {
+MoveGenController.generateMoves = function () {
     "use strict";
-    GameBoard.moveListStart[GameBoard.ply + 1] = GameBoard.moveListStart[GameBoard.ply];
+    GameBoardController.moveListStart[GameBoardController.ply + 1] = GameBoardController.moveListStart[GameBoardController.ply];
     
     var pceType, pceNum, sq, pceIndex, pce, t_sq, dir, index;
     
-    if (GameBoard.side === COLOURS.WHITE) {
+    if (GameBoardController.side === COLOURS.WHITE) {
         pceType = PIECES.wP;
-        for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
-            sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+        for (pceNum = 0; pceNum < GameBoardController.pceNum[pceType]; ++pceNum) {
+            sq = GameBoardController.pList[PCEINDEX(pceType, pceNum)];
             
-            if (GameBoard.pieces[sq + 10] === PIECES.EMPTY) {
-                addWhitePawnQuietMove(sq, sq + 10);
-                if (RanksBrd[sq] === RANKS.RANK_2 && GameBoard.pieces[sq + 20] === PIECES.EMPTY) {
-                    addQuietMove(MOVE(sq, sq + 20, PIECES.EMPTY, PIECES.EMPTY, MFLAGPS));
+            if (GameBoardController.pieces[sq + 10] === PIECES.EMPTY) {
+                MoveGenController.addWhitePawnQuietMove(sq, sq + 10);
+                if (RanksBrd[sq] === RANKS.RANK_2 && GameBoardController.pieces[sq + 20] === PIECES.EMPTY) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(sq, sq + 20, PIECES.EMPTY, PIECES.EMPTY, MFLAGPS));
                 }
             }
             
-            if (SQOFFBOARD(sq + 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 9]] === COLOURS.BLACK) {
-                addWhitePawnCaptureMove(sq, sq + 9, GameBoard.pieces[sq + 9]);
+            if (SQOFFBOARD(sq + 9) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq + 9]] === COLOURS.BLACK) {
+                MoveGenController.addWhitePawnCaptureMove(sq, sq + 9, GameBoardController.pieces[sq + 9]);
             }
             
-            if (SQOFFBOARD(sq + 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 11]] === COLOURS.BLACK) {
-                addWhitePawnCaptureMove(sq, sq + 11, GameBoard.pieces[sq + 11]);
+            if (SQOFFBOARD(sq + 11) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq + 11]] === COLOURS.BLACK) {
+                MoveGenController.addWhitePawnCaptureMove(sq, sq + 11, GameBoardController.pieces[sq + 11]);
             }
             
-            if (GameBoard.enPas !== SQUARES.NO_SQ) {
-                if (sq + 9 === GameBoard.enPas) {
-                    addEnPassentMove(MOVE(sq, sq + 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+            if (GameBoardController.enPas !== SQUARES.NO_SQ) {
+                if (sq + 9 === GameBoardController.enPas) {
+                    MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq + 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
                 }
-                if (sq + 11 === GameBoard.enPas) {
-                    addEnPassentMove(MOVE(sq, sq + 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
-                }
-            }
-        }
-        
-        if (GameBoard.castlePerm & CASTLEBIT.WKCA) {
-            if (GameBoard.pieces[SQUARES.F1] === PIECES.EMPTY && GameBoard.pieces[SQUARES.G1] === PIECES.EMPTY) {
-                if (sqAttacked(SQUARES.F1, COLOURS.BLACK) === BOOL.FALSE && sqAttacked(SQUARES.E1, COLOURS.BLACK) === BOOL.FALSE) {
-                    addQuietMove(MOVE(SQUARES.E1, SQUARES.G1, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
+                if (sq + 11 === GameBoardController.enPas) {
+                    MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq + 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
                 }
             }
         }
         
-        if (GameBoard.castlePerm & CASTLEBIT.WQCA) {
-            if (GameBoard.pieces[SQUARES.D1] === PIECES.EMPTY && GameBoard.pieces[SQUARES.C1] === PIECES.EMPTY && GameBoard.pieces[SQUARES.B1] === PIECES.EMPTY) {
-                if (sqAttacked(SQUARES.D1, COLOURS.BLACK) === BOOL.FALSE && sqAttacked(SQUARES.E1, COLOURS.BLACK) === BOOL.FALSE) {
-                    addQuietMove(MOVE(SQUARES.E1, SQUARES.C1, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
+        if (GameBoardController.castlePerm & CASTLEBIT.WKCA) {
+            if (GameBoardController.pieces[SQUARES.F1] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.G1] === PIECES.EMPTY) {
+                if (GameBoardController.sqAttacked(SQUARES.F1, COLOURS.BLACK) === BOOL.FALSE && GameBoardController.sqAttacked(SQUARES.E1, COLOURS.BLACK) === BOOL.FALSE) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(SQUARES.E1, SQUARES.G1, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
+                }
+            }
+        }
+        
+        if (GameBoardController.castlePerm & CASTLEBIT.WQCA) {
+            if (GameBoardController.pieces[SQUARES.D1] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.C1] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.B1] === PIECES.EMPTY) {
+                if (GameBoardController.sqAttacked(SQUARES.D1, COLOURS.BLACK) === BOOL.FALSE && GameBoardController.sqAttacked(SQUARES.E1, COLOURS.BLACK) === BOOL.FALSE) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(SQUARES.E1, SQUARES.C1, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
                 }
             }
         }
         
     } else {
         pceType = PIECES.bP;
-        for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
-            sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+        for (pceNum = 0; pceNum < GameBoardController.pceNum[pceType]; ++pceNum) {
+            sq = GameBoardController.pList[PCEINDEX(pceType, pceNum)];
             
-            if (GameBoard.pieces[sq - 10] === PIECES.EMPTY) {
-                addBlackPawnQuietMove(sq, sq - 10);
-                if (RanksBrd[sq] === RANKS.RANK_7 && GameBoard.pieces[sq - 20] === PIECES.EMPTY) {
-                    addQuietMove(MOVE(sq, sq - 20, PIECES.EMPTY, PIECES.EMPTY, MFLAGPS));
+            if (GameBoardController.pieces[sq - 10] === PIECES.EMPTY) {
+                MoveGenController.addBlackPawnQuietMove(sq, sq - 10);
+                if (RanksBrd[sq] === RANKS.RANK_7 && GameBoardController.pieces[sq - 20] === PIECES.EMPTY) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(sq, sq - 20, PIECES.EMPTY, PIECES.EMPTY, MFLAGPS));
                 }
             }
             
-            if (SQOFFBOARD(sq - 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 9]] === COLOURS.WHITE) {
-                addBlackPawnCaptureMove(sq, sq - 9, GameBoard.pieces[sq - 9]);
+            if (SQOFFBOARD(sq - 9) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq - 9]] === COLOURS.WHITE) {
+                MoveGenController.addBlackPawnCaptureMove(sq, sq - 9, GameBoardController.pieces[sq - 9]);
             }
             
-            if (SQOFFBOARD(sq - 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 11]] === COLOURS.WHITE) {
-                addBlackPawnCaptureMove(sq, sq - 11, GameBoard.pieces[sq - 11]);
+            if (SQOFFBOARD(sq - 11) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq - 11]] === COLOURS.WHITE) {
+                MoveGenController.addBlackPawnCaptureMove(sq, sq - 11, GameBoardController.pieces[sq - 11]);
             }
             
-            if (GameBoard.enPas !== SQUARES.NO_SQ) {
-                if (sq - 9 === GameBoard.enPas) {
-                    addEnPassentMove(MOVE(sq, sq - 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+            if (GameBoardController.enPas !== SQUARES.NO_SQ) {
+                if (sq - 9 === GameBoardController.enPas) {
+                    MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq - 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
                 }
-                if (sq - 11 === GameBoard.enPas) {
-                    addEnPassentMove(MOVE(sq, sq - 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+                if (sq - 11 === GameBoardController.enPas) {
+                    MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq - 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
                 }
             }
         }
-        if (GameBoard.castlePerm & CASTLEBIT.BKCA) {
-            if (GameBoard.pieces[SQUARES.F8] === PIECES.EMPTY && GameBoard.pieces[SQUARES.G8] === PIECES.EMPTY) {
-                if (sqAttacked(SQUARES.F8, COLOURS.WHITE) === BOOL.FALSE && sqAttacked(SQUARES.E8, COLOURS.WHITE) === BOOL.FALSE) {
-                    addQuietMove(MOVE(SQUARES.E8, SQUARES.G8, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
+        if (GameBoardController.castlePerm & CASTLEBIT.BKCA) {
+            if (GameBoardController.pieces[SQUARES.F8] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.G8] === PIECES.EMPTY) {
+                if (GameBoardController.sqAttacked(SQUARES.F8, COLOURS.WHITE) === BOOL.FALSE && GameBoardController.sqAttacked(SQUARES.E8, COLOURS.WHITE) === BOOL.FALSE) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(SQUARES.E8, SQUARES.G8, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
                 }
             }
         }
         
-        if (GameBoard.castlePerm & CASTLEBIT.BQCA) {
-            if (GameBoard.pieces[SQUARES.D8] === PIECES.EMPTY && GameBoard.pieces[SQUARES.C8] === PIECES.EMPTY && GameBoard.pieces[SQUARES.B8] === PIECES.EMPTY) {
-                if (sqAttacked(SQUARES.D8, COLOURS.WHITE) === BOOL.FALSE && sqAttacked(SQUARES.E8, COLOURS.WHITE) === BOOL.FALSE) {
-                    addQuietMove(MOVE(SQUARES.E8, SQUARES.C8, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
+        if (GameBoardController.castlePerm & CASTLEBIT.BQCA) {
+            if (GameBoardController.pieces[SQUARES.D8] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.C8] === PIECES.EMPTY && GameBoardController.pieces[SQUARES.B8] === PIECES.EMPTY) {
+                if (GameBoardController.sqAttacked(SQUARES.D8, COLOURS.WHITE) === BOOL.FALSE && GameBoardController.sqAttacked(SQUARES.E8, COLOURS.WHITE) === BOOL.FALSE) {
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(SQUARES.E8, SQUARES.C8, PIECES.EMPTY, PIECES.EMPTY, MFLAGCA));
                 }
             }
         }
     }
     
-    pceIndex = LoopNonSlideIndex[GameBoard.side];
+    pceIndex = LoopNonSlideIndex[GameBoardController.side];
     pce = LoopNonSlidePce[pceIndex++];
     
     while (pce !== 0) {
-        for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
-            sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+        for (pceNum = 0; pceNum < GameBoardController.pceNum[pce]; ++pceNum) {
+            sq = GameBoardController.pList[PCEINDEX(pce, pceNum)];
             
             for (index = 0; index < DirNum[pce]; index++) {
                 dir = PceDir[pce][index];
@@ -231,24 +235,24 @@ function generateMoves() {
                     continue;
                 }
                 
-                if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
-                    if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
-                        addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+                if (GameBoardController.pieces[t_sq] !== PIECES.EMPTY) {
+                    if (PieceCol[GameBoardController.pieces[t_sq]] !== GameBoardController.side) {
+                        MoveGenController.addCaptureMove(MoveGenController.MOVE(sq, t_sq, GameBoardController.pieces[t_sq], PIECES.EMPTY, 0));
                     }
                 } else {
-                    addQuietMove(MOVE(sq, t_sq, PIECES.EMPTY, PIECES.EMPTY, 0));
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(sq, t_sq, PIECES.EMPTY, PIECES.EMPTY, 0));
                 }
             }
         }
         pce = LoopNonSlidePce[pceIndex++];
     }
     
-    pceIndex = LoopSlidePieceIndex[GameBoard.side];
+    pceIndex = LoopSlidePieceIndex[GameBoardController.side];
     pce = LoopSlidePiece[pceIndex++];
     
     while (pce !== 0) {
-        for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
-            sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+        for (pceNum = 0; pceNum < GameBoardController.pceNum[pce]; ++pceNum) {
+            sq = GameBoardController.pList[PCEINDEX(pce, pceNum)];
             
             for (index = 0; index < DirNum[pce]; index++) {
                 dir = PceDir[pce][index];
@@ -256,47 +260,47 @@ function generateMoves() {
                 
                 while (SQOFFBOARD(t_sq) === BOOL.FALSE) {
                     
-                    if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
-                        if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
-                            addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+                    if (GameBoardController.pieces[t_sq] !== PIECES.EMPTY) {
+                        if (PieceCol[GameBoardController.pieces[t_sq]] !== GameBoardController.side) {
+                            MoveGenController.addCaptureMove(MoveGenController.MOVE(sq, t_sq, GameBoardController.pieces[t_sq], PIECES.EMPTY, 0));
                         }
                         break;
                     }
-                    addQuietMove(MOVE(sq, t_sq, PIECES.EMPTY, PIECES.EMPTY, 0));
+                    MoveGenController.addQuietMove(MoveGenController.MOVE(sq, t_sq, PIECES.EMPTY, PIECES.EMPTY, 0));
                     t_sq += dir;
                 }
             }
         }
         pce = LoopSlidePiece[pceIndex++];
     }
-}
+};
 
-function generateCaptures() {
+MoveGenController.generateCaptures = function () {
     "use strict";
-	GameBoard.moveListStart[GameBoard.ply + 1] = GameBoard.moveListStart[GameBoard.ply];
+	GameBoardController.moveListStart[GameBoardController.ply + 1] = GameBoardController.moveListStart[GameBoardController.ply];
 	
 	var pceType, pceNum, sq, pceIndex, pce, t_sq, dir, index;
-    if (GameBoard.side === COLOURS.WHITE) {
+    if (GameBoardController.side === COLOURS.WHITE) {
 		pceType = PIECES.wP;
 		
-		for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
-			sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+		for (pceNum = 0; pceNum < GameBoardController.pceNum[pceType]; ++pceNum) {
+			sq = GameBoardController.pList[PCEINDEX(pceType, pceNum)];
 			
-			if (SQOFFBOARD(sq + 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 9]] === COLOURS.BLACK) {
-				addWhitePawnCaptureMove(sq, sq + 9, GameBoard.pieces[sq + 9]);
+			if (SQOFFBOARD(sq + 9) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq + 9]] === COLOURS.BLACK) {
+				MoveGenController.addWhitePawnCaptureMove(sq, sq + 9, GameBoardController.pieces[sq + 9]);
 			}
 			
-			if (SQOFFBOARD(sq + 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq + 11]] === COLOURS.BLACK) {
-				addWhitePawnCaptureMove(sq, sq + 11, GameBoard.pieces[sq + 11]);
+			if (SQOFFBOARD(sq + 11) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq + 11]] === COLOURS.BLACK) {
+				MoveGenController.addWhitePawnCaptureMove(sq, sq + 11, GameBoardController.pieces[sq + 11]);
 			}
 			
-			if (GameBoard.enPas !== SQUARES.NO_SQ) {
-				if (sq + 9 === GameBoard.enPas) {
-					addEnPassentMove(MOVE(sq, sq + 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+			if (GameBoardController.enPas !== SQUARES.NO_SQ) {
+				if (sq + 9 === GameBoardController.enPas) {
+					MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq + 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
 				}
 				
-				if (sq + 11 === GameBoard.enPas) {
-					addEnPassentMove(MOVE(sq, sq + 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				if (sq + 11 === GameBoardController.enPas) {
+					MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq + 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
 				}
 			}
 			
@@ -305,35 +309,35 @@ function generateCaptures() {
 	} else {
 		pceType = PIECES.bP;
 		
-		for (pceNum = 0; pceNum < GameBoard.pceNum[pceType]; ++pceNum) {
-			sq = GameBoard.pList[PCEINDEX(pceType, pceNum)];
+		for (pceNum = 0; pceNum < GameBoardController.pceNum[pceType]; ++pceNum) {
+			sq = GameBoardController.pList[PCEINDEX(pceType, pceNum)];
 			
-			if (SQOFFBOARD(sq - 9) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 9]] === COLOURS.WHITE) {
-				addBlackPawnCaptureMove(sq, sq - 9, GameBoard.pieces[sq - 9]);
+			if (SQOFFBOARD(sq - 9) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq - 9]] === COLOURS.WHITE) {
+				MoveGenController.addBlackPawnCaptureMove(sq, sq - 9, GameBoardController.pieces[sq - 9]);
 			}
 			
-			if (SQOFFBOARD(sq - 11) === BOOL.FALSE && PieceCol[GameBoard.pieces[sq - 11]] === COLOURS.WHITE) {
-				addBlackPawnCaptureMove(sq, sq - 11, GameBoard.pieces[sq - 11]);
+			if (SQOFFBOARD(sq - 11) === BOOL.FALSE && PieceCol[GameBoardController.pieces[sq - 11]] === COLOURS.WHITE) {
+				MoveGenController.addBlackPawnCaptureMove(sq, sq - 11, GameBoardController.pieces[sq - 11]);
 			}
 			
-			if (GameBoard.enPas !== SQUARES.NO_SQ) {
-				if (sq - 9 === GameBoard.enPas) {
-					addEnPassentMove(MOVE(sq, sq - 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+			if (GameBoardController.enPas !== SQUARES.NO_SQ) {
+				if (sq - 9 === GameBoardController.enPas) {
+					MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq - 9, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
 				}
 				
-				if (sq - 11 === GameBoard.enPas) {
-					addEnPassentMove(MOVE(sq, sq - 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
+				if (sq - 11 === GameBoardController.enPas) {
+					MoveGenController.addEnPassentMove(MoveGenController.MOVE(sq, sq - 11, PIECES.EMPTY, PIECES.EMPTY, MFLAGEP));
 				}
 			}
 		}
 	}
 	
-	pceIndex = LoopNonSlideIndex[GameBoard.side];
+	pceIndex = LoopNonSlideIndex[GameBoardController.side];
 	pce = LoopNonSlidePce[pceIndex++];
 	
 	while (pce !== 0) {
-		for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
-			sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+		for (pceNum = 0; pceNum < GameBoardController.pceNum[pce]; ++pceNum) {
+			sq = GameBoardController.pList[PCEINDEX(pce, pceNum)];
 			
 			for (index = 0; index < DirNum[pce]; index++) {
 				dir = PceDir[pce][index];
@@ -343,9 +347,9 @@ function generateCaptures() {
 					continue;
 				}
 				
-				if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
-					if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
-						addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+				if (GameBoardController.pieces[t_sq] !== PIECES.EMPTY) {
+					if (PieceCol[GameBoardController.pieces[t_sq]] !== GameBoardController.side) {
+						MoveGenController.addCaptureMove(MoveGenController.MOVE(sq, t_sq, GameBoardController.pieces[t_sq], PIECES.EMPTY, 0));
 					}
 				}
 			}
@@ -353,12 +357,12 @@ function generateCaptures() {
 		pce = LoopNonSlidePce[pceIndex++];
 	}
 	
-	pceIndex = LoopSlidePieceIndex[GameBoard.side];
+	pceIndex = LoopSlidePieceIndex[GameBoardController.side];
 	pce = LoopSlidePiece[pceIndex++];
 	
 	while (pce !== 0) {
-		for (pceNum = 0; pceNum < GameBoard.pceNum[pce]; ++pceNum) {
-			sq = GameBoard.pList[PCEINDEX(pce, pceNum)];
+		for (pceNum = 0; pceNum < GameBoardController.pceNum[pce]; ++pceNum) {
+			sq = GameBoardController.pList[PCEINDEX(pce, pceNum)];
 			
 			for (index = 0; index < DirNum[pce]; index++) {
 				dir = PceDir[pce][index];
@@ -366,9 +370,9 @@ function generateCaptures() {
 				
 				while (SQOFFBOARD(t_sq) === BOOL.FALSE) {
 				
-					if (GameBoard.pieces[t_sq] !== PIECES.EMPTY) {
-						if (PieceCol[GameBoard.pieces[t_sq]] !== GameBoard.side) {
-							addCaptureMove(MOVE(sq, t_sq, GameBoard.pieces[t_sq], PIECES.EMPTY, 0));
+					if (GameBoardController.pieces[t_sq] !== PIECES.EMPTY) {
+						if (PieceCol[GameBoardController.pieces[t_sq]] !== GameBoardController.side) {
+							MoveGenController.addCaptureMove(MoveGenController.MOVE(sq, t_sq, GameBoardController.pieces[t_sq], PIECES.EMPTY, 0));
 						}
 						break;
 					}
@@ -378,4 +382,4 @@ function generateCaptures() {
 		}
 		pce = LoopSlidePiece[pceIndex++];
 	}
-}
+};

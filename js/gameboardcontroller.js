@@ -2,46 +2,42 @@
 /*jslint plusplus: true */
 /*jslint continue: true */
 /*global BRD_SQ_NUM, COLOURS, PIECES, SQUARES, PieceKeys, SideKey, CastleKeys, MAXDEPTH, MAXPOSITIONMOVES, SQ120, RANKS, FILES, console, FR2SQ, CASTLEBIT, RankChar, PceChar, FileChar, SideChar, PieceCol, PieceVal, prSq, BOOL, sqAttacked, KnDir, PieceKnight, RkDir, PieceRookQueen, BiDir, PieceBishopQueen, KiDir, PieceKing, generatePosKey */
-function PCEINDEX(pce, pceNum) {
+
+var GameBoardController = {};
+
+GameBoardController.pieces = [BRD_SQ_NUM];
+GameBoardController.side = COLOURS.WHITE;
+GameBoardController.fiftyMove = 0;
+GameBoardController.hisPly = 0;
+GameBoardController.history = [];
+GameBoardController.ply = 0;
+GameBoardController.enPas = 0;
+GameBoardController.castlePerm = 0;
+GameBoardController.material = [2]; // WHITE,BLACK material of pieces
+GameBoardController.pceNum = [13]; // Indexed by Piece
+GameBoardController.pList = [14 * 10];
+GameBoardController.posKey = 0;
+
+GameBoardController.moveList = [MAXDEPTH * MAXPOSITIONMOVES];
+GameBoardController.moveScores = [MAXDEPTH * MAXPOSITIONMOVES];
+GameBoardController.moveListStart = [MAXDEPTH];
+GameBoardController.pvTable = [];
+GameBoardController.pvArray = [MAXDEPTH];
+GameBoardController.searchHistory = [14 * BRD_SQ_NUM];
+GameBoardController.searchKillers = [3 * MAXDEPTH];
+
+
+GameBoardController.checkBoard = function () {
     "use strict";
-    return (pce * 10 + pceNum);
-}
-
-var GameBoard = {};
-
-GameBoard.pieces = [BRD_SQ_NUM];
-GameBoard.side = COLOURS.WHITE;
-GameBoard.fiftyMove = 0;
-GameBoard.hisPly = 0;
-GameBoard.history = [];
-GameBoard.ply = 0;
-GameBoard.enPas = 0;
-GameBoard.castlePerm = 0;
-GameBoard.material = [2]; // WHITE,BLACK material of pieces
-GameBoard.pceNum = [13]; // Indexed by Piece
-GameBoard.pList = [14 * 10];
-GameBoard.posKey = 0;
-
-GameBoard.moveList = [MAXDEPTH * MAXPOSITIONMOVES];
-GameBoard.moveScores = [MAXDEPTH * MAXPOSITIONMOVES];
-GameBoard.moveListStart = [MAXDEPTH];
-GameBoard.pvTable = [];
-GameBoard.pvArray = [MAXDEPTH];
-GameBoard.searchHistory = [14 * BRD_SQ_NUM];
-GameBoard.searchKillers = [3 * MAXDEPTH];
-
-
-function checkBoard() {
-    "use strict";
-    var t_pceNum, t_material, sq64, t_piece, t_pce_num, sq120, colour, pcount;
+    var t_pceNum, t_material, sq64, t_piece, t_pce_num, sq120;
     
     t_pceNum = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     t_material = [ 0, 0 ];
     
     for (t_piece = PIECES.wP; t_piece <= PIECES.bK; ++t_piece) {
-        for (t_pce_num = 0; t_pce_num < GameBoard.pceNum[t_piece]; ++t_pce_num) {
-            sq120 = GameBoard.pList[PCEINDEX(t_piece, t_pce_num)];
-            if (GameBoard.pieces[sq120] !== t_piece) {
+        for (t_pce_num = 0; t_pce_num < GameBoardController.pceNum[t_piece]; ++t_pce_num) {
+            sq120 = GameBoardController.pList[PCEINDEX(t_piece, t_pce_num)];
+            if (GameBoardController.pieces[sq120] !== t_piece) {
                 console.log('Error Pce Lists');
                 return BOOL.FALSE;
             }
@@ -50,37 +46,37 @@ function checkBoard() {
     
     for (sq64 = 0; sq64 < 64; ++sq64) {
         sq120 = SQ120(sq64);
-        t_piece = GameBoard.pieces[sq120];
+        t_piece = GameBoardController.pieces[sq120];
         t_pceNum[t_piece]++;
         t_material[PieceCol[t_piece]] += PieceVal[t_piece];
     }
     
     for (t_piece = PIECES.wP; t_piece <= PIECES.bK; ++t_piece) {
-        if (t_pceNum[t_piece] !== GameBoard.pceNum[t_piece]) {
+        if (t_pceNum[t_piece] !== GameBoardController.pceNum[t_piece]) {
             console.log('Error t_pceNum');
             return BOOL.FALSE;
         }
     }
     
-    if (t_material[COLOURS.WHITE] !== GameBoard.material[COLOURS.WHITE] ||
-            t_material[COLOURS.BLACK] !== GameBoard.material[COLOURS.BLACK]) {
+    if (t_material[COLOURS.WHITE] !== GameBoardController.material[COLOURS.WHITE] ||
+            t_material[COLOURS.BLACK] !== GameBoardController.material[COLOURS.BLACK]) {
         console.log('Error t_material');
         return BOOL.FALSE;
     }
     
-    if (GameBoard.side !== COLOURS.WHITE && GameBoard.side !== COLOURS.BLACK) {
-        console.log('Error GameBoard.side');
+    if (GameBoardController.side !== COLOURS.WHITE && GameBoardController.side !== COLOURS.BLACK) {
+        console.log('Error GameBoardController.side');
         return BOOL.FALSE;
     }
     
-    if (generatePosKey() !== GameBoard.posKey) {
-        console.log('Error GameBoard.posKey');
+    if (getElementsByClassName.generatePosKey() !== GameBoardController.posKey) {
+        console.log('Error GameBoardController.posKey');
     }
     
     return BOOL.TRUE;
-}
+};
 
-function printBoard() {
+GameBoardController.printBoard = function () {
     
     "use strict";
     var sq, file, rank, piece, line;
@@ -90,7 +86,7 @@ function printBoard() {
         line = (RankChar[rank] + "  ");
         for (file = FILES.FILE_A; file <= FILES.FILE_H; file++) {
             sq = FR2SQ(file, rank);
-            piece = GameBoard.pieces[sq];
+            piece = GameBoardController.pieces[sq];
             line += (" " + PceChar[piece] + " ");
         }
         console.log(line);
@@ -103,121 +99,121 @@ function printBoard() {
     }
     
     console.log(line);
-    console.log("side:" + SideChar[GameBoard.side]);
-    console.log("enPas:" + GameBoard.enPas);
+    console.log("side:" + SideChar[GameBoardController.side]);
+    console.log("enPas:" + GameBoardController.enPas);
     line = "";
     
-    if (GameBoard.castlePerm & CASTLEBIT.WKCA) {
+    if (GameBoardController.castlePerm & CASTLEBIT.WKCA) {
         line += 'K';
     }
-    if (GameBoard.castlePerm & CASTLEBIT.WQCA) {
+    if (GameBoardController.castlePerm & CASTLEBIT.WQCA) {
         line += 'Q';
     }
-    if (GameBoard.castlePerm & CASTLEBIT.BKCA) {
+    if (GameBoardController.castlePerm & CASTLEBIT.BKCA) {
         line += 'k';
     }
-    if (GameBoard.castlePerm & CASTLEBIT.BQCA) {
+    if (GameBoardController.castlePerm & CASTLEBIT.BQCA) {
         line += 'q';
     }
     console.log("castle:" + line);
-    console.log("key:" + GameBoard.posKey.toString(16));
+    console.log("key:" + GameBoardController.posKey.toString(16));
     
     
-}
+};
 
-function printPieceList() {
+GameBoardController.printPieceList = function () {
     "use strict";
     var piece, pceNum;
     
     for (piece = PIECES.wP; piece <= PIECES.bK; ++piece) {
-        for (pceNum = 0; pceNum < GameBoard.pceNum[piece]; ++pceNum) {
-            console.log('Piece ' + PceChar[piece] + ' on ' + prSq(GameBoard.pList[PCEINDEX(piece, pceNum)]));
+        for (pceNum = 0; pceNum < GameBoardController.pceNum[piece]; ++pceNum) {
+            console.log('Piece ' + PceChar[piece] + ' on ' + IoController.prSq(GameBoardController.pList[PCEINDEX(piece, pceNum)]));
         }
     }
-}
+};
 
-function generatePosKey() {
+GameBoardController.generatePosKey = function () {
     "use strict";
     
-    var sq = 0, finalKey = 0, piece = PIECES.EMPTY;
+    var sq, finalKey = 0, piece = PIECES.EMPTY;
     
     for (sq = 0; sq < BRD_SQ_NUM; ++sq) {
-        piece = GameBoard.pieces[sq];
+        piece = GameBoardController.pieces[sq];
         if (piece !== PIECES.EMPTY && piece !== SQUARES.OFFBOARD) {
             finalKey ^= PieceKeys[(piece * 120) + sq];
         }
     }
     
-    if (GameBoard.side === COLOURS.WHITE) {
+    if (GameBoardController.side === COLOURS.WHITE) {
         finalKey ^= SideKey;
     }
     
-    if (GameBoard.enPas !== SQUARES.NO_SQ) {
-        finalKey ^= PieceKeys[GameBoard.enPas];
+    if (GameBoardController.enPas !== SQUARES.NO_SQ) {
+        finalKey ^= PieceKeys[GameBoardController.enPas];
     }
     
-    finalKey ^= CastleKeys[GameBoard.castlePerm];
+    finalKey ^= CastleKeys[GameBoardController.castlePerm];
     
     return finalKey;
     
-}
+};
 
-function updateListsMaterial() {
+GameBoardController.updateListsMaterial = function () {
     "use strict";
     var piece, sq, index, colour;
     
     for (index = 0; index < 14 * 120; ++index) {
-        GameBoard.pList[index] = PIECES.EMPTY;
+        GameBoardController.pList[index] = PIECES.EMPTY;
     }
     
     for (index = 0; index < 2; ++index) {
-        GameBoard.material[index] = 0;
+        GameBoardController.material[index] = 0;
     }
     
     for (index = 0; index < 13; ++index) {
-        GameBoard.pceNum[index] = 0;
+        GameBoardController.pceNum[index] = 0;
     }
     
     for (index = 0; index < 64; ++index) {
         sq = SQ120(index);
-        piece = GameBoard.pieces[sq];
+        piece = GameBoardController.pieces[sq];
         if (piece !== PIECES.EMPTY) {
             colour = PieceCol[piece];
             
-            GameBoard.material[colour] += PieceVal[piece];
+            GameBoardController.material[colour] += PieceVal[piece];
             
-            GameBoard.pList[PCEINDEX(piece, GameBoard.pceNum[piece])] = sq;
-            GameBoard.pceNum[piece]++;
+            GameBoardController.pList[PCEINDEX(piece, GameBoardController.pceNum[piece])] = sq;
+            GameBoardController.pceNum[piece]++;
         }
     }
-}
+};
 
-function resetBoard() {
+GameBoardController.resetBoard = function () {
     "use strict";
     var index;
     
     for (index = 0; index < BRD_SQ_NUM; ++index) {
-        GameBoard.pieces[index] = SQUARES.OFFBOARD;
+        GameBoardController.pieces[index] = SQUARES.OFFBOARD;
     }
     
     for (index = 0; index < 64; ++index) {
-        GameBoard.pieces[SQ120(index)] = PIECES.EMPTY;
+        GameBoardController.pieces[SQ120(index)] = PIECES.EMPTY;
     }
     
-    GameBoard.side = COLOURS.BOTH;
-    GameBoard.enPas = SQUARES.NO_SQ;
-    GameBoard.fiftyMove = 0;
-    GameBoard.ply = 0;
-    GameBoard.hisPly = 0;
-    GameBoard.castlePerm = 0;
-    GameBoard.posKey = 0;
-    GameBoard.moveListStart[GameBoard.ply] = 0;
+    GameBoardController.side = COLOURS.BOTH;
+    GameBoardController.enPas = SQUARES.NO_SQ;
+    GameBoardController.fiftyMove = 0;
+    GameBoardController.ply = 0;
+    GameBoardController.hisPly = 0;
+    GameBoardController.castlePerm = 0;
+    GameBoardController.posKey = 0;
+    GameBoardController.moveListStart[GameBoardController.ply] = 0;
     
-}
+};
 
-function parseFen(fen) {
+GameBoardController.parseFen = function (fen) {
     "use strict";
-    resetBoard();
+    GameBoardController.resetBoard();
     
     var rank = RANKS.RANK_8, file = FILES.FILE_A, piece = 0, count = 0, i = 0, sq120 = 0, fenCnt = 0;
     
@@ -269,7 +265,7 @@ function parseFen(fen) {
         case '7':
         case '8':
             piece = PIECES.EMPTY;
-            count = fen[fenCnt].charCodeAt() - '0'.charCodeAt();
+            count = fen[fenCnt].charCodeAt(0) - '0'.charCodeAt(0);
             break;
         case '/':
         case ' ':
@@ -284,14 +280,14 @@ function parseFen(fen) {
         
         for (i = 0; i < count; i++) {
             sq120 = FR2SQ(file, rank);
-            GameBoard.pieces[sq120] = piece;
+            GameBoardController.pieces[sq120] = piece;
             file++;
         }
         fenCnt++;
         
     } // while loop end
     
-    GameBoard.side = (fen[fenCnt] === 'w') ? COLOURS.WHITE : COLOURS.BLACK;
+    GameBoardController.side = (fen[fenCnt] === 'w') ? COLOURS.WHITE : COLOURS.BLACK;
     fenCnt += 2;
     
     for (i = 0; i < 4; i++) {
@@ -301,16 +297,16 @@ function parseFen(fen) {
         
         switch (fen[fenCnt]) {
         case 'K':
-            GameBoard.castlePerm |= CASTLEBIT.WKCA;
+            GameBoardController.castlePerm |= CASTLEBIT.WKCA;
             break;
         case 'Q':
-            GameBoard.castlePerm |= CASTLEBIT.WQCA;
+            GameBoardController.castlePerm |= CASTLEBIT.WQCA;
             break;
         case 'k':
-            GameBoard.castlePerm |= CASTLEBIT.BKCA;
+            GameBoardController.castlePerm |= CASTLEBIT.BKCA;
             break;
         case 'q':
-            GameBoard.castlePerm |= CASTLEBIT.BQCA;
+            GameBoardController.castlePerm |= CASTLEBIT.BQCA;
             break;
         default:
             break;
@@ -318,20 +314,21 @@ function parseFen(fen) {
         fenCnt++;
     }
     fenCnt++;
-    
-    if (fen[fenCnt] !== '-') {
-        file = fen[fenCnt].charCodeAt() - 'a'.charCodeAt();
-        rank = fen[fenCnt + 1].charCodeAt() - '1'.charCodeAt();
-        console.log("fen[fenCnt]:" + fen[fenCnt] + " File:" + file + " Rank:" + rank);
-        GameBoard.enPas = FR2SQ(file, rank);
-    }
-    
-    GameBoard.posKey = generatePosKey();
-    updateListsMaterial();
-    sqAttacked(21, 0);
-}
 
-function printSqAttacked() {
+    if (fen[fenCnt] === '-') {
+    } else {
+        file = fen[fenCnt].charCodeAt(0) - 'a'.charCodeAt(0);
+        rank = fen[fenCnt + 1].charCodeAt(0) - '1'.charCodeAt(0);
+        console.log("fen[fenCnt]:" + fen[fenCnt] + " File:" + file + " Rank:" + rank);
+        GameBoardController.enPas = FR2SQ(file, rank);
+    }
+
+    GameBoardController.posKey = GameBoardController.generatePosKey();
+    GameBoardController.updateListsMaterial();
+    GameBoardController.sqAttacked(21, 0);
+};
+
+GameBoardController.printSqAttacked = function () {
     "use strict";
     var sq, file, rank, piece, line;
     console.log("\nAttacked:\n");
@@ -340,7 +337,7 @@ function printSqAttacked() {
         line = ((rank + 1) + "  ");
         for (file = FILES.FILE_A; file <= FILES.FILE_H; file++) {
             sq = FR2SQ(file, rank);
-            if (sqAttacked(sq, GameBoard.side) === BOOL.TRUE) {
+            if (GameBoardController.sqAttacked(sq, GameBoardController.side) === BOOL.TRUE) {
                 piece = "X";
             } else {
                 piece = "-";
@@ -350,26 +347,26 @@ function printSqAttacked() {
         console.log(line);
     }
     console.log("");
-}
+};
 
-function sqAttacked(sq, side) {
+GameBoardController.sqAttacked = function (sq, side) {
     "use strict";
     var pce, t_sq, index, dir;
     
     // Test for an attacking pawn
     if (side === COLOURS.WHITE) {
-        if (GameBoard.pieces[sq - 11] === PIECES.wP || GameBoard.pieces[sq - 9] === PIECES.wP) {
+        if (GameBoardController.pieces[sq - 11] === PIECES.wP || GameBoardController.pieces[sq - 9] === PIECES.wP) {
             return BOOL.TRUE;
         }
     } else {
-        if (GameBoard.pieces[sq + 11] === PIECES.bP || GameBoard.pieces[sq + 9] === PIECES.bP) {
+        if (GameBoardController.pieces[sq + 11] === PIECES.bP || GameBoardController.pieces[sq + 9] === PIECES.bP) {
             return BOOL.TRUE;
         }
     }
     
     // Test for attacking knight
     for (index = 0; index < KnDir.length; index++) {
-        pce = GameBoard.pieces[sq + KnDir[index]];
+        pce = GameBoardController.pieces[sq + KnDir[index]];
         if (pce !== SQUARES.OFFBOARD && PieceCol[pce] === side && PieceKnight[pce] === BOOL.TRUE) {
             return BOOL.TRUE;
         }
@@ -379,7 +376,7 @@ function sqAttacked(sq, side) {
     for (index = 0; index < 4; ++index) {
         dir = RkDir[index];
         t_sq = sq + dir;
-        pce = GameBoard.pieces[t_sq];
+        pce = GameBoardController.pieces[t_sq];
         while (pce !== SQUARES.OFFBOARD) {
             if (pce !== PIECES.EMPTY) {
                 if (PieceRookQueen[pce] === BOOL.TRUE && PieceCol[pce] === side) {
@@ -388,7 +385,7 @@ function sqAttacked(sq, side) {
                 break;
             }
             t_sq += dir;
-            pce = GameBoard.pieces[t_sq];
+            pce = GameBoardController.pieces[t_sq];
         }
     }
     
@@ -396,7 +393,7 @@ function sqAttacked(sq, side) {
     for (index = 0; index < 4; ++index) {
         dir = BiDir[index];
         t_sq = sq + dir;
-        pce = GameBoard.pieces[t_sq];
+        pce = GameBoardController.pieces[t_sq];
         while (pce !== SQUARES.OFFBOARD) {
             if (pce !== PIECES.EMPTY) {
                 if (PieceBishopQueen[pce] === BOOL.TRUE && PieceCol[pce] === side) {
@@ -405,20 +402,20 @@ function sqAttacked(sq, side) {
                 break;
             }
             t_sq += dir;
-            pce = GameBoard.pieces[t_sq];
+            pce = GameBoardController.pieces[t_sq];
         }
     }
     
     // Test for attacking King
     for (index = 0; index < KiDir.length; index++) {
-        pce = GameBoard.pieces[sq + KiDir[index]];
+        pce = GameBoardController.pieces[sq + KiDir[index]];
         if (pce !== SQUARES.OFFBOARD && PieceCol[pce] === side && PieceKing[pce] === BOOL.TRUE) {
             return BOOL.TRUE;
         }
     }
     
     return BOOL.FALSE;
-}
+};
             
     
     

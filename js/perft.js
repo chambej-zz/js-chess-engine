@@ -1,54 +1,56 @@
 /*jslint plusplus: true */
 /*jslint bitwise: true */
 /*jslint continue: true */
-/*global generateMoves, GameBoard, makeMove, BOOL, takeMove, printBoard, console, prMove */
+/*global generateMoves, GameBoardController, makeMove, BOOL, takeMove, printBoard, console, prMove */
+var PerftController = {};
+
 var perft_leafNodes;
 
-function perft(depth) {
+PerftController.perft = function (depth) {
     "use strict";
     if (depth === 0) {
         perft_leafNodes++;
         return;
     }
-    generateMoves();
+    MoveGenController.generateMoves();
     var index, move;
     
-    for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
-        move = GameBoard.moveList[index];
-        if (makeMove(move) === BOOL.FALSE) {
+    for (index = GameBoardController.moveListStart[GameBoardController.ply]; index < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++index) {
+        move = GameBoardController.moveList[index];
+        if (MakeMoveController.makeMove(move) === BOOL.FALSE) {
             continue;
         }
-        perft(depth - 1);
-        takeMove();
+        PerftController.perft(depth - 1);
+        MakeMoveController.takeMove();
     }
     
     return;
-}
+};
 
-function perftTest(depth) {
+PerftController.perftTest = function (depth) {
     "use strict";
     
-    printBoard();
+    GameBoardController.printBoard();
     console.log("Starting Test To Depth:" + depth);
     perft_leafNodes = 0;
     
-    generateMoves();
+    MoveGenController.generateMoves();
     
     var index, move, moveNum, cumnodes, oldnodes;
     moveNum = 0;
-    for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
-        move = GameBoard.moveList[index];
-        if (makeMove(move) === BOOL.FALSE) {
+    for (index = GameBoardController.moveListStart[GameBoardController.ply]; index < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++index) {
+        move = GameBoardController.moveList[index];
+        if (MakeMoveController.makeMove(move) === BOOL.FALSE) {
             continue;
         }
         moveNum++;
         cumnodes = perft_leafNodes;
-        perft(depth - 1);
-        takeMove();
+        PerftController.perft(depth - 1);
+        MakeMoveController.takeMove();
         oldnodes = perft_leafNodes - cumnodes;
-        console.log("move:" + moveNum + " " + prMove(move) + " " + oldnodes);
+        console.log("move:" + moveNum + " " + IoController.prMove(move) + " " + oldnodes);
     }
     
     console.log("Test Complete : " + perft_leafNodes + " leaf nodes visited");
     return;
-}
+};

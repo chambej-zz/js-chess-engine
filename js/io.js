@@ -1,11 +1,13 @@
 /*global FileChar, FilesBrd, RankChar, RanksBrd, FROMSQ, TOSQ, PROMOTED, PIECES, PieceKnight, PieceRookQueen, PieceBishopQueen, BOOL, console, GameBoard, generateMoves, NOMOVE, COLOURS, makeMove, takeMove */
 /*jslint plusplus: true */
-function prSq(sq) {
+var IoController = {};
+
+IoController.prSq = function (sq) {
     "use strict";
     return (FileChar[FilesBrd[sq]] + RankChar[RanksBrd[sq]]);
-}
+};
 
-function prMove(move) {
+IoController.prMove = function (move) {
     "use strict";
     var MvStr, ff, rf, ft, rt, promoted, pchar;
     
@@ -30,31 +32,31 @@ function prMove(move) {
         MvStr += pchar;
     }
     return MvStr;
-}
+};
 
-function printMoveList() {
+IoController.printMoveList = function () {
     "use strict";
     var index, move;
     console.log('Move List:');
     
-    for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
-        move = GameBoard.moveList[index];
-        console.log(prMove(move));
+    for (index = GameBoardController.moveListStart[GameBoardController.ply]; index < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++index) {
+        move = GameBoardController.moveList[index];
+        console.log(IoController.prMove(move));
     }
-}
+};
 
-function parseMove(from, to) {
+IoController.parseMove = function (from, to) {
     "use strict";
-    generateMoves();
+    MoveGenController.generateMoves();
     
     var Move = NOMOVE, PromPce = PIECES.EMPTY, found = BOOL.FALSE, index;
     
-    for (index = GameBoard.moveListStart[GameBoard.ply]; index < GameBoard.moveListStart[GameBoard.ply + 1]; ++index) {
-        Move = GameBoard.moveList[index];
+    for (index = GameBoardController.moveListStart[GameBoardController.ply]; index < GameBoardController.moveListStart[GameBoardController.ply + 1]; ++index) {
+        Move = GameBoardController.moveList[index];
         if (FROMSQ(Move) === from && TOSQ(Move) === to) {
             PromPce = PROMOTED(Move);
             if (PromPce !== PIECES.EMPTY) {
-                if ((PromPce === PIECES.wQ && GameBoard.side === COLOURS.WHITE) || (PromPce === PIECES.bQ && GameBoard.side === COLOURS.BLACK)) {
+                if ((PromPce === PIECES.wQ && GameBoardController.side === COLOURS.WHITE) || (PromPce === PIECES.bQ && GameBoardController.side === COLOURS.BLACK)) {
                     found = BOOL.TRUE;
                     break;
                 }
@@ -65,13 +67,13 @@ function parseMove(from, to) {
     }
     
     if (found !== BOOL.FALSE) {
-        if (makeMove(Move) === BOOL.FALSE) {
+        if (MakeMoveController.makeMove(Move) === BOOL.FALSE) {
             return NOMOVE;
         }
-        takeMove();
+        MakeMoveController.takeMove();
         return Move;
     }
     
     return NOMOVE;
-}
+};
                     

@@ -1,10 +1,10 @@
 /*jslint plusplus: true */
 /*jslint browser: true */
 /*jslint bitwise: true */
-/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoard, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES, initMvvLva, newGame */
+/*global FILES, RANKS, SQUARES, BRD_SQ_NUM, FilesBrd, RanksBrd, FR2SQ, console, $, PieceKeys, CastleKeys, SideKey, RAND_32, Sq120ToSq64, Sq64ToSq120, parseFen, printBoard, START_FEN, printSqAttacked, generateMoves, printMoveList, checkBoard, MAXGAMEMOVES, GameBoardController, NOMOVE, printPieceList, makeMove, takeMove, PVENTRIES, initMvvLva, newGame */
 function initFilesRanksBrd() {
     "use strict";
-    var index = 0, file = FILES.FILE_A, rank = RANKS.RANK_1, sq = SQUARES.A1;
+    var index, file = FILES.FILE_A, rank, sq = SQUARES.A1;
     
     for (index = 0; index < BRD_SQ_NUM; ++index) {
         FilesBrd[index] = SQUARES.OFFBOARD;
@@ -22,7 +22,7 @@ function initFilesRanksBrd() {
 
 function initHashKeys() {
     "use strict";
-    var index = 0;
+    var index;
     
     for (index = 0; index < 14 * 120; ++index) {
         PieceKeys[index] = RAND_32();
@@ -37,7 +37,7 @@ function initHashKeys() {
 
 function initSq120ToSq64() {
     "use strict";
-    var index = 0, file = FILES.FILE_A, rank = RANKS.RANK_1, sq = SQUARES.A1, sq64 = 0;
+    var index, file = FILES.FILE_A, rank, sq = SQUARES.A1, sq64 = 0;
     
     for (index = 0; index < BRD_SQ_NUM; ++index) {
         Sq120ToSq64[index] = 65;
@@ -59,9 +59,9 @@ function initSq120ToSq64() {
 
 function initBoardVars() {
     "use strict";
-    var index = 0;
+    var index;
     for (index = 0; index < MAXGAMEMOVES; ++index) {
-        GameBoard.history.push({
+        GameBoardController.history.push({
             move: NOMOVE,
             castlePerm: 0,
             enPas: 0,
@@ -71,7 +71,7 @@ function initBoardVars() {
     }
     
     for (index = 0; index < PVENTRIES; ++index) {
-        GameBoard.pvTable.push({
+        GameBoardController.pvTable.push({
             move : NOMOVE,
             posKey : 0
         });
@@ -80,7 +80,7 @@ function initBoardVars() {
 
 function initBoardSquares() {
     "use strict";
-	var light = 0, rankName, fileName, divString, lastLight = 0, rankIter = 0, fileIter = 0, lightString;
+	var light = 0, rankName, fileName, divString, lastLight = 0, rankIter, fileIter = 0, lightString;
 	
 	for (rankIter = RANKS.RANK_8; rankIter >= RANKS.RANK_1; rankIter--) {
 		light = lastLight ^ 1;
@@ -109,7 +109,7 @@ function init() {
     initHashKeys();
     initSq120ToSq64();
     initBoardVars();
-    initMvvLva();
+    MoveGenController.initMvvLva();
     initBoardSquares();
 }
 
@@ -117,6 +117,6 @@ $(function () {
     "use strict";
 	init();
 	console.log("Main Init Called");
-    newGame(START_FEN);
+    GuiController.newGame(START_FEN);
 });
 

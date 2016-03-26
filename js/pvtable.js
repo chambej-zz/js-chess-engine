@@ -1,40 +1,42 @@
 /*jslint plusplus: true */
-/*global GameBoard, PVENTRIES, probePvTable, NOMOVE, moveExists, BOOL, makeMove, takeMove  */
-function getPvLine(depth) {
+/*global GameBoardController, PVENTRIES, probePvTable, NOMOVE, moveExists, BOOL, makeMove, takeMove  */
+var PvTableController = {};
+
+PvTableController.getPvLine = function (depth) {
     "use strict";
-	var move = probePvTable(), count = 0;
+	var move = PvTableController.probePvTable(), count = 0;
 	
 	while (move !== NOMOVE && count < depth) {
 	
-		if (moveExists(move) === BOOL.TRUE) {
-			makeMove(move);
-			GameBoard.pvArray[count++] = move;
+		if (MoveGenController.moveExists(move) === BOOL.TRUE) {
+			MakeMoveController.makeMove(move);
+			GameBoardController.pvArray[count++] = move;
 		} else {
 			break;
 		}
-		move = probePvTable();
+		move = PvTableController.probePvTable();
 	}
 	
-	while (GameBoard.ply > 0) {
-		takeMove();
+	while (GameBoardController.ply > 0) {
+		MakeMoveController.takeMove();
 	}
 	
 	return count;
 	
-}
+};
 
-function probePvTable() {
+PvTableController.probePvTable = function () {
     "use strict";
-    var index = GameBoard.posKey % PVENTRIES;
+    var index = GameBoardController.posKey % PVENTRIES;
     
-    if (GameBoard.pvTable[index].posKey === GameBoard.posKey) {
-        return GameBoard.pvTable[index].move;
+    if (GameBoardController.pvTable[index].posKey === GameBoardController.posKey) {
+        return GameBoardController.pvTable[index].move;
     }
-}
+};
 
-function storePvMove(move) {
+PvTableController.storePvMove = function (move) {
     "use strict";
-    var index = GameBoard.posKey % PVENTRIES;
-    GameBoard.pvTable[index].posKey = GameBoard.posKey;
-    GameBoard.pvTable[index].move = move;
-}
+    var index = GameBoardController.posKey % PVENTRIES;
+    GameBoardController.pvTable[index].posKey = GameBoardController.posKey;
+    GameBoardController.pvTable[index].move = move;
+};
